@@ -1,0 +1,5 @@
+C:\Users\draco\Desktop\Deltarando Randomizer\Deltarando Generator\Deltarando Generator\bin\Debug\Deltarando Generator.exe.config
+C:\Users\draco\Desktop\Deltarando Randomizer\Deltarando Generator\Deltarando Generator\bin\Debug\Deltarando Generator.exe
+C:\Users\draco\Desktop\Deltarando Randomizer\Deltarando Generator\Deltarando Generator\obj\Debug\Deltarando Generator.csproj.AssemblyReference.cache
+C:\Users\draco\Desktop\Deltarando Randomizer\Deltarando Generator\Deltarando Generator\obj\Debug\Deltarando Generator.csproj.CoreCompileInputs.cache
+C:\Users\draco\Desktop\Deltarando Randomizer\Deltarando Generator\Deltarando Generator\obj\Debug\Deltarando Generator.exe

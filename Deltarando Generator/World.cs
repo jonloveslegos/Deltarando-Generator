@@ -33,6 +33,7 @@ public class World
 {
     public List<ItemType> locations = new List<ItemType>();
     public List<ItemType> items = new List<ItemType>();
+    List<ItemType> acquired = new List<ItemType>();
     public List<Predicate<World>> rules = new List<Predicate<World>>();
     public World()
     {
@@ -44,6 +45,133 @@ public class World
     public void PlaceItem(int locationId, ItemType itemType)
     {
         locations[locationId] = itemType;
+    }
+
+    public void AddItems()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            items.Add(new ItemType(29, "item"));
+            items.Add(new ItemType(8, "armor"));
+            items.Add(new ItemType(9, "armor"));
+            items.Add(new ItemType(11, "armor"));
+            items.Add(new ItemType(21, "armor"));
+            items.Add(new ItemType(1, "armor"));
+            items.Add(new ItemType(8, "item"));
+            items.Add(new ItemType(12, "item"));
+            items.Add(new ItemType(13, "item"));
+            items.Add(new ItemType(15, "item"));
+            items.Add(new ItemType(16, "item"));
+            items.Add(new ItemType(22, "item"));
+            items.Add(new ItemType(25, "item"));
+        }
+        for (int i = 0; i < 3; i++)
+        {
+            items.Add(new ItemType(15, "armor"));
+            items.Add(new ItemType(16, "armor"));
+            items.Add(new ItemType(18, "armor"));
+            items.Add(new ItemType(7, "item"));
+            items.Add(new ItemType(11, "item"));
+        }
+        for (int i = 0; i < 8; i++)
+        {
+            items.Add(new ItemType(1, "item"));
+        }
+        for (int i = 0; i < 2; i++)
+        {
+            items.Add(new ItemType(2, "armor"));
+            items.Add(new ItemType(19, "armor"));
+            items.Add(new ItemType(20, "armor"));
+            items.Add(new ItemType(2, "item"));
+            items.Add(new ItemType(4, "item"));
+        }
+        for (int i = 3; i < 15; i++)
+        {
+            items.Add(new ItemType(i, "key"));
+        }
+        for (int i = 0; i < 10; i++)
+        {
+            items.Add(new ItemType(16, "key"));
+        }
+        for (int i = 0; i < 14; i++)
+        {
+            items.Add(new ItemType(0, "save"));
+        }
+        for (int i = 0; i < 19; i++)
+        {
+            items.Add(new ItemType(1, "krislvl"));
+            items.Add(new ItemType(1, "susielvl"));
+            items.Add(new ItemType(1, "ralseilvl"));
+        }
+        items.Add(new ItemType(40, "gold"));
+        items.Add(new ItemType(2, "party"));
+        items.Add(new ItemType(3, "party"));
+        items.Add(new ItemType(2, "cancontrol"));
+        items.Add(new ItemType(1, "ability"));
+        items.Add(new ItemType(2, "ability"));
+        items.Add(new ItemType(3, "ability"));
+        items.Add(new ItemType(4, "ability"));
+        items.Add(new ItemType(5, "ability"));
+        items.Add(new ItemType(13, "ability"));
+        items.Add(new ItemType(12, "ability"));
+        items.Add(new ItemType(0, "ability"));
+        items.Add(new ItemType(6, "ability"));
+        items.Add(new ItemType(7, "ability"));
+        items.Add(new ItemType(8, "ability"));
+        items.Add(new ItemType(9, "ability"));
+        items.Add(new ItemType(10, "ability"));
+        items.Add(new ItemType(11, "ability"));
+        items.Add(new ItemType(7, "krisspell"));
+        items.Add(new ItemType(7, "susiespell"));
+        items.Add(new ItemType(7, "ralseispell"));
+        items.Add(new ItemType(2, "ralseispell"));
+        items.Add(new ItemType(3, "ralseispell"));
+        items.Add(new ItemType(4, "susiespell"));
+        items.Add(new ItemType(9, "susiespell"));
+        items.Add(new ItemType(10, "krisspell"));
+        items.Add(new ItemType(11, "krisspell"));
+        items.Add(new ItemType(12, "krisspell"));
+        items.Add(new ItemType(13, "ralseispell"));
+        items.Add(new ItemType(14, "ralseispell"));
+        items.Add(new ItemType(15, "susiespell"));
+        items.Add(new ItemType(16, "susiespell"));
+        items.Add(new ItemType(17, "ralseispell"));
+        items.Add(new ItemType(18, "susiespell"));
+        items.Add(new ItemType(19, "ralseispell"));
+        items.Add(new ItemType(3, "item"));
+        items.Add(new ItemType(6, "item"));
+        items.Add(new ItemType(9, "item"));
+        items.Add(new ItemType(23, "item"));
+        items.Add(new ItemType(27, "item"));
+        items.Add(new ItemType(28, "item"));
+        items.Add(new ItemType(5, "weapon"));
+        items.Add(new ItemType(6, "weapon"));
+        items.Add(new ItemType(7, "weapon"));
+        items.Add(new ItemType(9, "weapon"));
+        items.Add(new ItemType(10, "weapon"));
+        items.Add(new ItemType(11, "weapon"));
+        items.Add(new ItemType(12, "weapon"));
+        items.Add(new ItemType(13, "weapon"));
+        items.Add(new ItemType(14, "weapon"));
+        items.Add(new ItemType(15, "weapon"));
+        items.Add(new ItemType(16, "weapon"));
+        items.Add(new ItemType(17, "weapon"));
+        items.Add(new ItemType(18, "weapon"));
+        items.Add(new ItemType(19, "weapon"));
+        items.Add(new ItemType(20, "weapon"));
+        items.Add(new ItemType(3, "armor"));
+        items.Add(new ItemType(4, "armor"));
+        items.Add(new ItemType(5, "armor"));
+        items.Add(new ItemType(7, "armor"));
+        items.Add(new ItemType(10, "armor"));
+        items.Add(new ItemType(12, "armor"));
+        items.Add(new ItemType(13, "armor"));
+        items.Add(new ItemType(14, "armor"));
+        items.Add(new ItemType(17, "armor"));
+        items.Add(new ItemType(0, "shortcut"));
+        items.Add(new ItemType(1, "shortcut"));
+        items.Add(new ItemType(2, "shortcut"));
+        items.Add(new ItemType(3, "shortcut"));
     }
 }
 

@@ -13,6 +13,7 @@ namespace Deltarando_Generator
             World world = new World();
             Logic logic = new Logic();
             logic.SetLogic(world);
+            world.AddItems();
         }
     }
 }

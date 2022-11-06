@@ -1,1 +1,4 @@
 Deltarando Generator/bin/*
+Deltarando Generator/obj/*
+*.cache
+.vs

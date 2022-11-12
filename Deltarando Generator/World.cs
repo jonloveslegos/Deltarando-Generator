@@ -5,11 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 
 public delegate bool Del(World world);
-public class ItemType
+public struct ItemType
 {
-    public int id = 0;
-    public string category = "";
-    public ItemType() { }
+    public int id;
+    public string category;
+    public ItemType(ItemType itemType)
+    {
+        id = itemType.id;
+        category = itemType.category;
+    }
     public ItemType(int itemId, string typeOfItem)
     {
         id = itemId;
@@ -21,6 +25,14 @@ public static class Rule
 {
     public static bool PlacedItem(World world, ItemType itemId)
     {
+        if (world.locations.Exists(x => x.id == itemId.id && x.category == itemId.category))
+        {
+            return true;
+        }
+        if (world.starting.Exists(x => x.id == itemId.id && x.category == itemId.category))
+        {
+            return true;
+        }
         return world.locations.Exists(x => x.id == itemId.id && x.category == itemId.category);
     }
     public static bool ReturnTrue(World world)
@@ -32,146 +44,533 @@ public static class Rule
 public class World
 {
     public List<ItemType> locations = new List<ItemType>();
+    public List<ItemType> wantedLocs = new List<ItemType>();
     public List<ItemType> items = new List<ItemType>();
-    List<ItemType> acquired = new List<ItemType>();
+    public List<ItemType> itemsJunk = new List<ItemType>();
+    public List<ItemType> starting = new List<ItemType>();
     public List<Predicate<World>> rules = new List<Predicate<World>>();
+    public List<bool> options = new List<bool>();
+    public Random rng = new Random();
     public World()
     {
-        for (var i = 0; i < 999; i++)
+        for (var i = 0; i < 300; i++)
         {
             rules.Add((thisWorld) => SpecialLogic.ReturnTrue(thisWorld));
         }
+        for (var i = 0; i <= 99; i++)
+        {
+            options.Add(false);
+        }
+        for (int i = 0; i <= 300; i++)
+        {
+            locations.Add(new ItemType(-999, ""));
+        }
+        for (int i = 110; i <= 140; i++)
+        {
+            locations[i] = new ItemType(-1, "");
+        }
+        for (int i = 20; i <= 103; i++)
+        {
+            locations[i] = new ItemType(-1, "");
+        }
+        for (int i = 5; i <= 18; i++)
+        {
+            locations[i] = new ItemType(-1, "");
+        }
+        for (int i = 0; i <= 3; i++)
+        {
+            locations[i] = new ItemType(-1,"");
+        }
+        for (int i = 0; i <= 300; i++)
+        {
+            wantedLocs.Add(new ItemType(-999, ""));
+        }
     }
-    public void PlaceItem(int locationId, ItemType itemType)
+    public void PlaceItem(int locationId, ItemType itemListId)
     {
-        locations[locationId] = itemType;
+        locations[locationId] = new ItemType(itemListId);
+    }
+    public void PlaceForcedItem(int locationId, ItemType itemListId)
+    {
+        wantedLocs[locationId] = new ItemType(itemListId);
+    }
+
+    public void Randomize()
+    {
+        var backupLocations = new List<ItemType>(locations);
+        var backupItems = new List<ItemType>(items);
+        var backupItemsJunk = new List<ItemType>(itemsJunk);
+        var lastLocations = new List<List<ItemType>>();
+        var lastItems = new List<ItemType>();
+        var itemsRemoved = new List<ItemType>();
+        int timeSinceBack = 0;
+        int backCount = 0;
+        while (locations.Exists(x => x.id == -1 && x.category == ""))
+        {
+            List<int> emptyLocs = new List<int>();
+            for (int i = 0; i < locations.Count; i++)
+            {
+                if (locations[i].id == -1 && locations[i].category == "")
+                {
+                    emptyLocs.Add(i);
+                }
+            }
+            List<int> toChooseFrom = new List<int>();
+            for (int i = 0; i < emptyLocs.Count; i++)
+            {
+                if (rules[emptyLocs[i]].Invoke(this))
+                {
+                    toChooseFrom.Add(emptyLocs[i]);
+                }
+            }
+            if (items.Count+itemsJunk.Count <= 0)
+            {
+                locations = new List<ItemType>(backupLocations);
+                items = new List<ItemType>(backupItems);
+                itemsJunk = new List<ItemType>(backupItemsJunk);
+                lastLocations = new List<List<ItemType>>();
+                lastItems = new List<ItemType>();
+                itemsRemoved = new List<ItemType>();
+                timeSinceBack = 0;
+                backCount = 0;
+            }
+            else if (toChooseFrom.Count <= 0)
+            {
+                if (timeSinceBack < 3)
+                {
+                    for (int i = 0; i < backCount; i++)
+                    {
+                        if (lastLocations.Count > 1)
+                        {
+                            locations = new List<ItemType>(lastLocations[lastLocations.Count - 1]);
+                            if (!(lastItems[lastItems.Count - 1].id == -1 && lastItems[lastItems.Count - 1].category == ""))
+                            {
+                                itemsRemoved.Add(new ItemType(lastItems[lastItems.Count - 1]));
+                            }
+                            lastLocations.RemoveAt(lastLocations.Count - 1);
+                            lastItems.RemoveAt(lastItems.Count - 1);
+                        }
+                    }
+                }
+                locations = new List<ItemType>(lastLocations[lastLocations.Count - 1]);
+                if (!(lastItems[lastItems.Count - 1].id == -1 && lastItems[lastItems.Count - 1].category == ""))
+                {
+                    itemsRemoved.Add(new ItemType(lastItems[lastItems.Count - 1]));
+                }
+                lastLocations.RemoveAt(lastLocations.Count - 1);
+                lastItems.RemoveAt(lastItems.Count - 1);
+                timeSinceBack = 0;
+                backCount++;
+            }
+            else
+            {
+                int chosen = toChooseFrom[rng.Next(toChooseFrom.Count)];
+                var chosenItem = -1;
+                lastLocations.Add(new List<ItemType>(locations));
+                if (wantedLocs[chosen].id != -999)
+                {
+                    lastItems.Add(new ItemType(-1, ""));
+                    PlaceItem(chosen, wantedLocs[chosen]);
+                    toChooseFrom.Remove(chosen);
+                }
+                else
+                {
+                    if (items.Count <= 0)
+                    {
+                        chosenItem = rng.Next(itemsJunk.Count);
+                        lastItems.Add(new ItemType(itemsJunk[chosenItem]));
+                        PlaceItem(chosen, itemsJunk[chosenItem]);
+                        itemsJunk.RemoveAt(chosenItem);
+                    }
+                    else
+                    {
+                        chosenItem = rng.Next(items.Count);
+                        lastItems.Add(new ItemType(items[chosenItem]));
+                        PlaceItem(chosen, items[chosenItem]);
+                        items.RemoveAt(chosenItem);
+                    }
+
+                }
+                timeSinceBack++;
+                if (timeSinceBack >= 3)
+                {
+                    foreach (var item in itemsRemoved)
+                    {
+                        items.Add(new ItemType(item));
+                    }
+                    itemsRemoved.Clear();
+                    backCount = 0;
+                }
+                string locsLeft = "";
+                for (int i = 0; i < emptyLocs.Count; i++)
+                {
+                    locsLeft += emptyLocs[i].ToString()+ ",";
+                }
+                string locsAvail = "";
+                for (int i = 0; i < toChooseFrom.Count; i++)
+                {
+                    locsAvail += toChooseFrom[i].ToString() + ",";
+                }
+                Console.WriteLine("Placed item.\n" + locsAvail + " locations accessible.\n"+ locsLeft +" locations left.\n"+ (items.Count+itemsJunk.Count+ itemsRemoved.Count).ToString()+" items left.");
+            }
+        }
     }
 
     public void AddItems()
     {
-        for (int i = 0; i < 4; i++)
+        if (options[8])
         {
-            items.Add(new ItemType(29, "item"));
-            items.Add(new ItemType(8, "armor"));
-            items.Add(new ItemType(9, "armor"));
-            items.Add(new ItemType(11, "armor"));
-            items.Add(new ItemType(21, "armor"));
-            items.Add(new ItemType(1, "armor"));
-            items.Add(new ItemType(8, "item"));
-            items.Add(new ItemType(12, "item"));
-            items.Add(new ItemType(13, "item"));
-            items.Add(new ItemType(15, "item"));
-            items.Add(new ItemType(16, "item"));
-            items.Add(new ItemType(22, "item"));
-            items.Add(new ItemType(25, "item"));
+            for (int i = 3; i < 15; i++)
+            {
+                items.Add(new ItemType(i, "key"));
+            }
+            if (options[25])
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    items.Add(new ItemType(16, "key"));
+                }
+                items.Remove(new ItemType(12, "key"));
+            }
         }
-        for (int i = 0; i < 3; i++)
+        else
         {
-            items.Add(new ItemType(15, "armor"));
-            items.Add(new ItemType(16, "armor"));
-            items.Add(new ItemType(18, "armor"));
-            items.Add(new ItemType(7, "item"));
-            items.Add(new ItemType(11, "item"));
+            PlaceForcedItem(34, new ItemType(3, "key"));
+            PlaceForcedItem(40, new ItemType(4, "key"));
+            PlaceForcedItem(33, new ItemType(5, "key"));
+            PlaceForcedItem(15, new ItemType(6, "key"));
+            PlaceForcedItem(13, new ItemType(7, "key"));
+            PlaceForcedItem(36, new ItemType(8, "key"));
+            PlaceForcedItem(37, new ItemType(9, "key"));
+            PlaceForcedItem(38, new ItemType(10, "key"));
+            PlaceForcedItem(39, new ItemType(11, "key"));
+            PlaceForcedItem(98, new ItemType(12, "key"));
+            PlaceForcedItem(102, new ItemType(13, "key"));
+            PlaceForcedItem(103, new ItemType(14, "key"));
         }
-        for (int i = 0; i < 8; i++)
+        if (options[7])
         {
-            items.Add(new ItemType(1, "item"));
+            if (options[24])
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    itemsJunk.Add(new ItemType(29, "item"));
+                    itemsJunk.Add(new ItemType(16, "item"));
+                    itemsJunk.Add(new ItemType(22, "item"));
+                    itemsJunk.Add(new ItemType(25, "item"));
+                }
+                itemsJunk.Add(new ItemType(23, "item"));
+                itemsJunk.Add(new ItemType(27, "item"));
+                itemsJunk.Add(new ItemType(28, "item"));
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                itemsJunk.Add(new ItemType(8, "item"));
+                itemsJunk.Add(new ItemType(12, "item"));
+                itemsJunk.Add(new ItemType(13, "item"));
+                itemsJunk.Add(new ItemType(15, "item"));
+            }
+            itemsJunk.Add(new ItemType(3, "item"));
+            items.Add(new ItemType(6, "item"));
+            itemsJunk.Add(new ItemType(9, "item"));
+            for (int i = 0; i < 3; i++)
+            {
+                itemsJunk.Add(new ItemType(7, "item"));
+                itemsJunk.Add(new ItemType(11, "item"));
+            }
+            for (int i = 0; i < 8; i++)
+            {
+                itemsJunk.Add(new ItemType(1, "item"));
+            }
+            for (int i = 0; i < 2; i++)
+            {
+                itemsJunk.Add(new ItemType(2, "item"));
+                items.Add(new ItemType(4, "item"));
+            }
         }
-        for (int i = 0; i < 2; i++)
+        else
         {
-            items.Add(new ItemType(2, "armor"));
-            items.Add(new ItemType(19, "armor"));
-            items.Add(new ItemType(20, "armor"));
-            items.Add(new ItemType(2, "item"));
-            items.Add(new ItemType(4, "item"));
+            PlaceForcedItem(0, new ItemType(1, "item"));
+            PlaceForcedItem(1, new ItemType(1, "item"));
+            PlaceForcedItem(2, new ItemType(1, "item"));
+            PlaceForcedItem(3, new ItemType(1, "item"));
+            PlaceForcedItem(5, new ItemType(6, "item"));
+            PlaceForcedItem(6, new ItemType(13, "item"));
+            PlaceForcedItem(7, new ItemType(12, "item"));
+            PlaceForcedItem(8, new ItemType(9, "item"));
+            PlaceForcedItem(9, new ItemType(7, "item"));
+            PlaceForcedItem(10, new ItemType(3, "item"));
+            PlaceForcedItem(11, new ItemType(4, "item"));
+            PlaceForcedItem(12, new ItemType(4, "item"));
+            PlaceForcedItem(14, new ItemType(2, "item"));
+            PlaceForcedItem(21, new ItemType(11, "item"));
+            PlaceForcedItem(22, new ItemType(2, "item"));
+            PlaceForcedItem(25, new ItemType(1, "item"));
+            PlaceForcedItem(26, new ItemType(8, "item"));
+            PlaceForcedItem(29, new ItemType(15, "item"));
         }
-        for (int i = 3; i < 15; i++)
+        if (options[4])
         {
-            items.Add(new ItemType(i, "key"));
+            for (int i = 0; i < 19; i++)
+            {
+                itemsJunk.Add(new ItemType(1, "krislvl"));
+                itemsJunk.Add(new ItemType(1, "susielvl"));
+                itemsJunk.Add(new ItemType(1, "ralseilvl"));
+            }
         }
-        for (int i = 0; i < 10; i++)
+        else
         {
-            items.Add(new ItemType(16, "key"));
+            for (int i = 0; i < 19; i++)
+            {
+                PlaceForcedItem(41+i,new ItemType(1, "krislvl"));
+                PlaceForcedItem(60+i,new ItemType(1, "susielvl"));
+                PlaceForcedItem(79+i,new ItemType(1, "ralseilvl"));
+            }
         }
-        for (int i = 0; i < 14; i++)
+        if (options[13])
         {
-            items.Add(new ItemType(0, "save"));
+            items.Add(new ItemType(2, "party"));
+            items.Add(new ItemType(3, "party"));
+            items.Add(new ItemType(2, "cancontrol"));
         }
-        for (int i = 0; i < 19; i++)
+        else
         {
-            items.Add(new ItemType(1, "krislvl"));
-            items.Add(new ItemType(1, "susielvl"));
-            items.Add(new ItemType(1, "ralseilvl"));
+            PlaceForcedItem(111, new ItemType(3, "party"));
+            PlaceForcedItem(110, new ItemType(2, "party"));
+            PlaceForcedItem(112, new ItemType(2, "cancontrol"));
         }
-        items.Add(new ItemType(40, "gold"));
-        items.Add(new ItemType(2, "party"));
-        items.Add(new ItemType(3, "party"));
-        items.Add(new ItemType(2, "cancontrol"));
-        items.Add(new ItemType(1, "ability"));
-        items.Add(new ItemType(2, "ability"));
-        items.Add(new ItemType(3, "ability"));
-        items.Add(new ItemType(4, "ability"));
-        items.Add(new ItemType(5, "ability"));
-        items.Add(new ItemType(13, "ability"));
-        items.Add(new ItemType(12, "ability"));
-        items.Add(new ItemType(0, "ability"));
-        items.Add(new ItemType(6, "ability"));
-        items.Add(new ItemType(7, "ability"));
-        items.Add(new ItemType(8, "ability"));
-        items.Add(new ItemType(9, "ability"));
-        items.Add(new ItemType(10, "ability"));
-        items.Add(new ItemType(11, "ability"));
-        items.Add(new ItemType(7, "krisspell"));
-        items.Add(new ItemType(7, "susiespell"));
-        items.Add(new ItemType(7, "ralseispell"));
-        items.Add(new ItemType(2, "ralseispell"));
-        items.Add(new ItemType(3, "ralseispell"));
-        items.Add(new ItemType(4, "susiespell"));
-        items.Add(new ItemType(9, "susiespell"));
-        items.Add(new ItemType(10, "krisspell"));
-        items.Add(new ItemType(11, "krisspell"));
-        items.Add(new ItemType(12, "krisspell"));
-        items.Add(new ItemType(13, "ralseispell"));
-        items.Add(new ItemType(14, "ralseispell"));
-        items.Add(new ItemType(15, "susiespell"));
-        items.Add(new ItemType(16, "susiespell"));
-        items.Add(new ItemType(17, "ralseispell"));
-        items.Add(new ItemType(18, "susiespell"));
-        items.Add(new ItemType(19, "ralseispell"));
-        items.Add(new ItemType(3, "item"));
-        items.Add(new ItemType(6, "item"));
-        items.Add(new ItemType(9, "item"));
-        items.Add(new ItemType(23, "item"));
-        items.Add(new ItemType(27, "item"));
-        items.Add(new ItemType(28, "item"));
-        items.Add(new ItemType(5, "weapon"));
-        items.Add(new ItemType(6, "weapon"));
-        items.Add(new ItemType(7, "weapon"));
-        items.Add(new ItemType(9, "weapon"));
-        items.Add(new ItemType(10, "weapon"));
-        items.Add(new ItemType(11, "weapon"));
-        items.Add(new ItemType(12, "weapon"));
-        items.Add(new ItemType(13, "weapon"));
-        items.Add(new ItemType(14, "weapon"));
-        items.Add(new ItemType(15, "weapon"));
-        items.Add(new ItemType(16, "weapon"));
-        items.Add(new ItemType(17, "weapon"));
-        items.Add(new ItemType(18, "weapon"));
-        items.Add(new ItemType(19, "weapon"));
-        items.Add(new ItemType(20, "weapon"));
-        items.Add(new ItemType(3, "armor"));
-        items.Add(new ItemType(4, "armor"));
-        items.Add(new ItemType(5, "armor"));
-        items.Add(new ItemType(7, "armor"));
-        items.Add(new ItemType(10, "armor"));
-        items.Add(new ItemType(12, "armor"));
-        items.Add(new ItemType(13, "armor"));
-        items.Add(new ItemType(14, "armor"));
-        items.Add(new ItemType(17, "armor"));
-        items.Add(new ItemType(0, "shortcut"));
-        items.Add(new ItemType(1, "shortcut"));
-        items.Add(new ItemType(2, "shortcut"));
-        items.Add(new ItemType(3, "shortcut"));
+        if (options[11])
+        {
+            items.Add(new ItemType(1, "ability"));
+            items.Add(new ItemType(2, "ability"));
+            items.Add(new ItemType(3, "ability"));
+            items.Add(new ItemType(4, "ability"));
+            items.Add(new ItemType(5, "ability"));
+        }
+        else
+        {
+            starting.Add(new ItemType(1, "ability"));
+            starting.Add(new ItemType(2, "ability"));
+            starting.Add(new ItemType(3, "ability"));
+            starting.Add(new ItemType(4, "ability"));
+            starting.Add(new ItemType(5, "ability"));
+        }
+        if (options[23])
+        {
+            items.Add(new ItemType(13, "ability"));
+        }
+        else
+        {
+            starting.Add(new ItemType(13, "ability"));
+        }
+        if (options[22])
+        {
+            items.Add(new ItemType(12, "ability"));
+        }
+        else
+        {
+            starting.Add(new ItemType(12, "ability"));
+        }
+        if (options[21])
+        {
+            items.Add(new ItemType(0, "ability"));
+        }
+        else
+        {
+            starting.Add(new ItemType(0, "ability"));
+        }
+        if (options[17])
+        {
+            items.Add(new ItemType(6, "ability"));
+            items.Add(new ItemType(7, "ability"));
+            items.Add(new ItemType(8, "ability"));
+            items.Add(new ItemType(9, "ability"));
+        }
+        else
+        {
+            starting.Add(new ItemType(6, "ability"));
+            starting.Add(new ItemType(7, "ability"));
+            starting.Add(new ItemType(8, "ability"));
+            starting.Add(new ItemType(9, "ability"));
+        }
+        if (options[17])
+        {
+            items.Add(new ItemType(10, "ability"));
+        }
+        else
+        {
+            starting.Add(new ItemType(10, "ability"));
+        }
+        if (options[17])
+        {
+            items.Add(new ItemType(11, "ability"));
+        }
+        else
+        {
+            starting.Add(new ItemType(11, "ability"));
+        }
+        for (int i = 123; i <= 125; i++)
+        {
+            PlaceForcedItem(i, new ItemType(0, "save"));
+        }
+        if (options[20])
+        {
+            for (int i = 0; i < 14; i++)
+            {
+                itemsJunk.Add(new ItemType(0, "save"));
+            }
+        }
+        else
+        {
+
+            for (int i = 126; i <= 139; i++)
+            {
+                PlaceForcedItem(i, new ItemType(0, "save"));
+            }
+        }
+        if (options[20])
+        {
+            items.Add(new ItemType(7, "krisspell"));
+            items.Add(new ItemType(7, "susiespell"));
+            items.Add(new ItemType(7, "ralseispell"));
+            itemsJunk.Add(new ItemType(2, "ralseispell"));
+            itemsJunk.Add(new ItemType(3, "ralseispell"));
+            itemsJunk.Add(new ItemType(4, "susiespell"));
+            if (options[24])
+            {
+                itemsJunk.Add(new ItemType(9, "susiespell"));
+                itemsJunk.Add(new ItemType(10, "krisspell"));
+                itemsJunk.Add(new ItemType(11, "krisspell"));
+                itemsJunk.Add(new ItemType(12, "krisspell"));
+                itemsJunk.Add(new ItemType(13, "ralseispell"));
+                itemsJunk.Add(new ItemType(14, "ralseispell"));
+                itemsJunk.Add(new ItemType(15, "susiespell"));
+                itemsJunk.Add(new ItemType(16, "susiespell"));
+                itemsJunk.Add(new ItemType(17, "ralseispell"));
+                itemsJunk.Add(new ItemType(18, "susiespell"));
+                itemsJunk.Add(new ItemType(19, "ralseispell"));
+            }
+        }
+        else
+        {
+            starting.Add(new ItemType(7, "krisspell"));
+            starting.Add(new ItemType(2, "ralseispell"));
+            starting.Add(new ItemType(3, "ralseispell"));
+            starting.Add(new ItemType(4, "susiespell"));
+            if (options[24])
+            {
+                starting.Add(new ItemType(7, "susiespell"));
+                starting.Add(new ItemType(7, "ralseispell"));
+                starting.Add(new ItemType(9, "susiespell"));
+                starting.Add(new ItemType(10, "krisspell"));
+                starting.Add(new ItemType(11, "krisspell"));
+                starting.Add(new ItemType(12, "krisspell"));
+                starting.Add(new ItemType(13, "ralseispell"));
+                starting.Add(new ItemType(14, "ralseispell"));
+                starting.Add(new ItemType(15, "susiespell"));
+                starting.Add(new ItemType(16, "susiespell"));
+                starting.Add(new ItemType(17, "ralseispell"));
+                starting.Add(new ItemType(18, "susiespell"));
+                starting.Add(new ItemType(19, "ralseispell"));
+            }
+        }
+        if (options[5])
+        {
+            itemsJunk.Add(new ItemType(5, "weapon"));
+            itemsJunk.Add(new ItemType(6, "weapon"));
+            itemsJunk.Add(new ItemType(7, "weapon"));
+            itemsJunk.Add(new ItemType(9, "weapon"));
+            itemsJunk.Add(new ItemType(10, "weapon"));
+            if (options[24])
+            {
+                itemsJunk.Add(new ItemType(11, "weapon"));
+                itemsJunk.Add(new ItemType(12, "weapon"));
+                itemsJunk.Add(new ItemType(13, "weapon"));
+                itemsJunk.Add(new ItemType(14, "weapon"));
+                itemsJunk.Add(new ItemType(15, "weapon"));
+                itemsJunk.Add(new ItemType(16, "weapon"));
+                itemsJunk.Add(new ItemType(17, "weapon"));
+                itemsJunk.Add(new ItemType(18, "weapon"));
+                itemsJunk.Add(new ItemType(19, "weapon"));
+                itemsJunk.Add(new ItemType(20, "weapon"));
+            }
+        }
+        else
+        {
+            PlaceForcedItem(16, new ItemType(9, "weapon"));
+            PlaceForcedItem(20, new ItemType(7, "weapon"));
+            PlaceForcedItem(28, new ItemType(5, "weapon"));
+            PlaceForcedItem(30, new ItemType(6, "weapon"));
+            PlaceForcedItem(31, new ItemType(10, "weapon"));
+        }
+        if (options[6])
+        {
+            if (options[24])
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    itemsJunk.Add(new ItemType(8, "armor"));
+                    itemsJunk.Add(new ItemType(9, "armor"));
+                    itemsJunk.Add(new ItemType(11, "armor"));
+                    itemsJunk.Add(new ItemType(21, "armor"));
+                }
+                for (int i = 0; i < 3; i++)
+                {
+                    itemsJunk.Add(new ItemType(15, "armor"));
+                    itemsJunk.Add(new ItemType(16, "armor"));
+                    itemsJunk.Add(new ItemType(18, "armor"));
+                }
+                for (int i = 0; i < 2; i++)
+                {
+                    itemsJunk.Add(new ItemType(19, "armor"));
+                    itemsJunk.Add(new ItemType(20, "armor"));
+                }
+                itemsJunk.Add(new ItemType(10, "armor"));
+                itemsJunk.Add(new ItemType(12, "armor"));
+                itemsJunk.Add(new ItemType(13, "armor"));
+                itemsJunk.Add(new ItemType(14, "armor"));
+                itemsJunk.Add(new ItemType(17, "armor"));
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                itemsJunk.Add(new ItemType(1, "armor"));
+            }
+            for (int i = 0; i < 2; i++)
+            {
+                itemsJunk.Add(new ItemType(2, "armor"));
+            }
+            itemsJunk.Add(new ItemType(3, "armor"));
+            itemsJunk.Add(new ItemType(4, "armor"));
+            itemsJunk.Add(new ItemType(5, "armor"));
+            itemsJunk.Add(new ItemType(7, "armor"));
+        }
+        else
+        {
+            PlaceForcedItem(27, new ItemType(1, "armor"));
+            PlaceForcedItem(32, new ItemType(1, "armor"));
+            PlaceForcedItem(17, new ItemType(2, "armor"));
+            PlaceForcedItem(23, new ItemType(4, "armor"));
+            PlaceForcedItem(24, new ItemType(7, "armor"));
+            PlaceForcedItem(35, new ItemType(5, "armor"));
+        }
+        if (options[3])
+        {
+            items.Add(new ItemType(0, "shortcut"));
+            items.Add(new ItemType(1, "shortcut"));
+            items.Add(new ItemType(2, "shortcut"));
+            items.Add(new ItemType(3, "shortcut"));
+        }
+        else
+        {
+            PlaceForcedItem(140, new ItemType(0, "shortcut"));
+            PlaceForcedItem(99, new ItemType(1, "shortcut"));
+            PlaceForcedItem(100, new ItemType(2, "shortcut"));
+            PlaceForcedItem(101, new ItemType(3, "shortcut"));
+        }
+        while (locations.FindAll(x => x.id == -1 && x.category == "").Count  > items.Count + itemsJunk.Count)
+        {
+            itemsJunk.Add(new ItemType(40, "gold"));
+        }
     }
 }
 
@@ -253,8 +652,8 @@ public class Logic
         world.rules.Insert(34, (thisWorld) => SpecialLogic.AreaAccess(thisWorld, 1));
         world.rules.Insert(36, (thisWorld) => SpecialLogic.CanCompleteTutorial(thisWorld));
         world.rules.Insert(12, (thisWorld) => SpecialLogic.CanCompleteTutorial(thisWorld));
-        world.rules.Insert(41, (thisWorld) => Rule.PlacedItem(thisWorld, new ItemType(9, "ability")) && Rule.PlacedItem(thisWorld, new ItemType(8, "ability")));
-        world.rules.Insert(111, (thisWorld) => Rule.PlacedItem(thisWorld, new ItemType(9, "ability")) && Rule.PlacedItem(thisWorld, new ItemType(8, "ability")));
+        world.rules.Insert(41, (thisWorld) => SpecialLogic.CanCompleteTutorial(thisWorld));
+        world.rules.Insert(111, (thisWorld) => SpecialLogic.CanCompleteTutorial(thisWorld));
         world.rules.Insert(114, (thisWorld) => Rule.PlacedItem(thisWorld, new ItemType(12, "ability")) && SpecialLogic.AreaAccess(thisWorld, 1));
         world.rules.Insert(115, (thisWorld) => Rule.PlacedItem(thisWorld, new ItemType(12, "ability")) && SpecialLogic.AreaAccess(thisWorld, 1));
         world.rules.Insert(116, (thisWorld) => Rule.PlacedItem(thisWorld, new ItemType(12, "ability")) && SpecialLogic.AreaAccess(thisWorld, 1));

@@ -17,13 +17,26 @@ namespace Deltarando_Generator
             world.AddItems();
             world.Randomize();
             var seed = File.CreateText(Directory.GetCurrentDirectory() + "/deltarando.seed");
+            for (int i = 0; i < world.options.Count; i++)
+            {
+                seed.WriteLine(i);
+                seed.WriteLine(world.options[i]);
+            }
+            for (int i = 0; i < world.trueStarting.Count; i++)
+            {
+                if (world.trueStarting[i].name != "")
+                {
+                    seed.WriteLine(-1);
+                    seed.WriteLine(world.trueStarting[i].name);
+                }
+            }
+            
             for (int i = 0; i < world.locations.Count; i++)
             {
-                if (world.locations[i].id != -999)
+                if (world.locations[i].name != "")
                 {
                     seed.WriteLine(i);
-                    seed.WriteLine(world.locations[i].category);
-                    seed.WriteLine(world.locations[i].id);
+                    seed.WriteLine(world.locations[i].name);
                 }
             }
             seed.Close();

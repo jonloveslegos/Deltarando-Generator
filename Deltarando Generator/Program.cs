@@ -30,7 +30,15 @@ namespace Deltarando_Generator
                     seed.WriteLine(world.trueStarting[i].name);
                 }
             }
-            
+
+            for (int i = 0; i < world.equipment.Count; i++)
+            {
+                if (world.equipment[i].name != "")
+                {
+                    seed.WriteLine(-i-10);
+                    seed.WriteLine(world.equipment[i].name);
+                }
+            }
             for (int i = 0; i < world.locations.Count; i++)
             {
                 if (world.locations[i].name != "")

@@ -49,10 +49,12 @@ public class World
     public List<ItemType> equipment = new List<ItemType>();
     public List<ItemType> wantedLocs = new List<ItemType>();
     public List<ItemType> items = new List<ItemType>();
+    public List<ItemType> rooms = new List<ItemType>();
     public List<ItemType> itemsJunk = new List<ItemType>();
     public List<ItemType> starting = new List<ItemType>();
     public List<ItemType> trueStarting = new List<ItemType>();
     public List<Predicate<World>> rules = new List<Predicate<World>>();
+    public List<Predicate<World>> roomRules = new List<Predicate<World>>();
     public List<int> options = new List<int>();
     public Random rng = new Random();
     public World()
@@ -103,15 +105,19 @@ public class World
             }
             else
             {
-                if (bool.Parse(itm.Split('=')[1].ToLower())) 
+                if (bool.Parse(itm.Split('=')[1].ToLower()))
                 {
-                    options[int.Parse(itm.Split('(', ')')[1])] = 1; 
+                    options[int.Parse(itm.Split('(', ')')[1])] = 1;
                 }
                 else
                 {
                     options[int.Parse(itm.Split('(', ')')[1])] = 0;
                 }
             }
+        }
+        for (int i = 0; i < 99; i++)
+        {
+            SpecialLogic.savedAreas.Add(false);
         }
         file.Close();
     }
@@ -154,8 +160,8 @@ public class World
                 }
             }
         }
-            while (locations.Exists(x => x.name == "Null") || items.Exists(x => x.name == "Kingly Key Piece") || itemsJunk.Exists(x => x.name == "Kingly Key Piece") || items.Exists(x => x.name == "Kingly Key") || itemsJunk.Exists(x => x.name == "Kingly Key"))
-        { 
+        while (locations.Exists(x => x.name == "Null") || items.Exists(x => x.name == "Kingly Key Piece") || itemsJunk.Exists(x => x.name == "Kingly Key Piece") || items.Exists(x => x.name == "Kingly Key") || itemsJunk.Exists(x => x.name == "Kingly Key"))
+        {
             List<int> emptyLocs = new List<int>();
             for (int i = 0; i < locations.Count; i++)
             {
@@ -188,7 +194,14 @@ public class World
                     toChooseFrom.Add(emptyLocs[i]);
                 }
             }
-            if (items.Count+itemsJunk.Count <= 0 || (toChooseFrom.Count <= 0 && lastLocations.Count < 5))
+            for (int i = 1; i < SpecialLogic.areaAccess.Count + 1; i++)
+            {
+                if (SpecialLogic.savedAreas[i] == false)
+                {
+                    SpecialLogic.savedAreas[i] = SpecialLogic.areaAccess[i].Invoke(this);
+                }
+            }
+            if (items.Count + itemsJunk.Count <= 0 || (toChooseFrom.Count <= 0 && lastLocations.Count < 5))
             {
                 locations = new List<ItemType>(backupLocations);
                 items = new List<ItemType>(backupItems);
@@ -246,13 +259,17 @@ public class World
                 lastItems.RemoveAt(lastItems.Count - 1);
                 timeSinceBack = 0;
                 backCount++;
+                for (int i = 1; i < SpecialLogic.areaAccess.Count + 1; i++)
+                {
+                    SpecialLogic.savedAreas[i] = SpecialLogic.areaAccess[i].Invoke(this);
+                }
             }
             else
             {
                 int chosen = toChooseFrom[rng.Next(toChooseFrom.Count)];
                 var chosenItem = -1;
                 lastLocations.Add(new List<ItemType>(locations));
-                if ((items.Count <= 0 || toChooseFrom.Count > items.Count*2) && itemsJunk.Count > 0)
+                if ((items.Count <= 0 || toChooseFrom.Count > items.Count * 2) && itemsJunk.Count > 0)
                 {
                     if (itemsJunk.Exists(x => x.name == "Kingly Key Piece"))
                     {
@@ -297,16 +314,51 @@ public class World
                 string locsLeft = "";
                 for (int i = 0; i < emptyLocs.Count; i++)
                 {
-                    locsLeft += emptyLocs[i].ToString()+ ",";
+                    locsLeft += emptyLocs[i].ToString() + ",";
                 }
                 string locsAvail = "";
                 for (int i = 0; i < toChooseFrom.Count; i++)
                 {
                     locsAvail += toChooseFrom[i].ToString() + ",";
                 }
-                Console.WriteLine("Placed item.\n" + locsAvail + " locations accessible.\n"+ locsLeft +" locations left.\n"+ (items.Count+itemsJunk.Count+ itemsRemoved.Count).ToString()+" items left.");
+                Console.WriteLine("Placed item.\n" + locsAvail + " locations accessible.\n" + locsLeft + " locations left.\n" + (items.Count + itemsJunk.Count + itemsRemoved.Count).ToString() + " items left.");
             }
         }
+    }
+
+    public void AddRooms()
+    {
+        rooms.Add(new ItemType("room_field_startA"));
+        rooms.Add(new ItemType("room_field_forestA"));
+        rooms.Add(new ItemType("room_field_forestB"));
+        rooms.Add(new ItemType("room_field1A"));
+        rooms.Add(new ItemType("room_field1B"));
+        rooms.Add(new ItemType("room_field2A"));
+        rooms.Add(new ItemType("room_field2B"));
+        rooms.Add(new ItemType("room_field2C"));
+        rooms.Add(new ItemType("room_field2AB"));
+        rooms.Add(new ItemType("room_field_topchefD"));
+        rooms.Add(new ItemType("room_field_topchefA"));
+        rooms.Add(new ItemType("room_field_puzzle1B"));
+        rooms.Add(new ItemType("room_field_puzzle1A"));
+        rooms.Add(new ItemType("room_field_mazeA"));
+        rooms.Add(new ItemType("room_field_mazeB"));
+        rooms.Add(new ItemType("room_field_puzzle2B"));
+        rooms.Add(new ItemType("room_field_puzzle2A"));
+        rooms.Add(new ItemType("room_field_getsusieB"));
+        rooms.Add(new ItemType("room_field_getsusieA"));
+        rooms.Add(new ItemType("room_field_shop1A"));
+        rooms.Add(new ItemType("room_field_shop1B"));
+        rooms.Add(new ItemType("room_field_shop1C"));
+        rooms.Add(new ItemType("room_field_puzzletutorialB"));
+        rooms.Add(new ItemType("room_field3A"));
+        rooms.Add(new ItemType("room_field3D"));
+        rooms.Add(new ItemType("room_field_boxpuzzleA"));
+        rooms.Add(new ItemType("room_field_boxpuzzleB"));
+        rooms.Add(new ItemType("room_field_4A"));
+        rooms.Add(new ItemType("room_field_4B"));
+        rooms.Add(new ItemType("room_field_4C"));
+        rooms.Add(new ItemType("room_field_secret1B"));
     }
 
     public void AddItems()
@@ -795,7 +847,7 @@ public class World
             }
         }
         file.Close();
-        while (locations.FindAll(x => x.name == "Null").Count  > items.Count + itemsJunk.Count- options[1] - (wantedLocs.Count-wantedLocs.FindAll(x => x.name == "").Count))
+        while (locations.FindAll(x => x.name == "Null").Count > items.Count + itemsJunk.Count - options[1] - (wantedLocs.Count - wantedLocs.FindAll(x => x.name == "").Count))
         {
             itemsJunk.Add(new ItemType("gold"));
         }
@@ -804,26 +856,6 @@ public class World
 
 public static class SpecialLogic
 {
-    public static bool AreaAccess(World world, int areaId)
-    {
-        if (areaId == 1)
-        {
-            return SpecialLogic.CanCompleteTutorial(world) && ((world.options[76] >= 3 && Rule.PlacedItem(world, new ItemType("SPARE"))) || (Rule.PlacedItem(world, new ItemType("FIGHT")) || (SpecialLogic.ActAvailability(world) && Rule.PlacedItem(world, new ItemType("SPARE"))))) && Rule.PlacedItem(world, new ItemType("Field Key"));
-        }
-        else if (areaId == 2)
-        {
-            return (SpecialLogic.AreaAccess(world, areaId - 1) && (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && Rule.PlacedItem(world, new ItemType("Board Key"))) || (SpecialLogic.AreaAccess(world, 1) && (SpecialLogic.ActAvailability(world) || world.options[3] == 1) && Rule.PlacedItem(world, new ItemType("BoardShortcutDoor")) && Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")));
-        }
-        else if (areaId == 3)
-        {
-            return (SpecialLogic.AreaAccess(world, areaId - 1) && (SpecialLogic.ActAvailability(world) || world.options[3] == 1) && Rule.PlacedItem(world, new ItemType("Forest Key"))) || (SpecialLogic.AreaAccess(world, 1) && Rule.PlacedItem(world, new ItemType("ForestShortcutDoor")) && Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")));
-        }
-        else if (areaId == 4)
-        {
-            return (SpecialLogic.AreaAccess(world, areaId-1) && Rule.PlacedItem(world, new ItemType("Castle Key"))) || (SpecialLogic.AreaAccess(world, 1) && Rule.PlacedItem(world, new ItemType("CastleShortcutDoor")) && Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")));
-        }
-        return true;
-    }
     public static bool ReturnTrue(World world)
     {
         return true;
@@ -839,69 +871,77 @@ public static class SpecialLogic
     public static bool UnlockedAreaCount(World world, int amountToUnlock)
     {
         int unlocked = 0;
-        if (SpecialLogic.AreaAccess(world, 1))
+        if (SpecialLogic.savedAreas[1])
         {
             unlocked++;
         }
-        if (SpecialLogic.AreaAccess(world, 2))
+        if (SpecialLogic.savedAreas[2])
         {
             unlocked++;
         }
-        if (SpecialLogic.AreaAccess(world, 3))
+        if (SpecialLogic.savedAreas[3])
         {
             unlocked++;
         }
-        if (SpecialLogic.AreaAccess(world, 4))
+        if (SpecialLogic.savedAreas[4])
         {
             unlocked++;
         }
         return (unlocked >= amountToUnlock);
     }
+    public static List<bool> savedAreas = new List<bool>();
+    public static Dictionary<int, Func<World, bool>> areaAccess = new Dictionary<int, Func<World, bool>>
+    {
+        {1, (w) => SpecialLogic.CanCompleteTutorial(w) && ((w.options[76] >= 3 && Rule.PlacedItem(w, new ItemType("SPARE"))) || (Rule.PlacedItem(w, new ItemType("FIGHT")) || (SpecialLogic.ActAvailability(w) && Rule.PlacedItem(w, new ItemType("SPARE"))))) && Rule.PlacedItem(w, new ItemType("Field Key"))},
+        {2, (w) => (SpecialLogic.savedAreas[1] && (Rule.PlacedItem(w, new ItemType("RUN")) || w.options[3] == 1) && Rule.PlacedItem(w, new ItemType("Board Key"))) || (SpecialLogic.savedAreas[1] && (SpecialLogic.ActAvailability(w) || w.options[3] == 1) && Rule.PlacedItem(w, new ItemType("BoardShortcutDoor")) && Rule.PlacedItem(w, new ItemType("FieldShortcutDoor")))},
+        {3, (w) => (SpecialLogic.savedAreas[2] && (SpecialLogic.ActAvailability(w) || w.options[3] == 1) && Rule.PlacedItem(w, new ItemType("Forest Key"))) || (SpecialLogic.savedAreas[1] && Rule.PlacedItem(w, new ItemType("ForestShortcutDoor")) && Rule.PlacedItem(w, new ItemType("FieldShortcutDoor")))},
+        {4, (w) => (SpecialLogic.savedAreas[3] && Rule.PlacedItem(w, new ItemType("Castle Key"))) || (SpecialLogic.savedAreas[1] && Rule.PlacedItem(w, new ItemType("CastleShortcutDoor")) && Rule.PlacedItem(w, new ItemType("FieldShortcutDoor")))},
+    };
 }
 
 public class Logic
 {
     public void SetLogic(World inWorld)
     {
-        inWorld.rules[0] = (world) => Rule.PlacedItem(world, new ItemType("Field Secret Key")) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[1] = (world) => Rule.PlacedItem(world, new ItemType("Field Secret Key")) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[2] = (world) => SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[3] = (world) => SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[5] = (world) => Rule.PlacedItem(world, new ItemType("BrokenCake")) && Rule.PlacedItem(world, new ItemType("Forest Secret Key")) && SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[6] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[7] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[8] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[9] = (world) => Rule.PlacedItem(world, new ItemType("Top Cake")) && SpecialLogic.AreaAccess(world, 1);
+        inWorld.rules[0] = (world) => Rule.PlacedItem(world, new ItemType("Field Secret Key")) && SpecialLogic.savedAreas[1];
+        inWorld.rules[1] = (world) => Rule.PlacedItem(world, new ItemType("Field Secret Key")) && SpecialLogic.savedAreas[1];
+        inWorld.rules[2] = (world) => SpecialLogic.savedAreas[1];
+        inWorld.rules[3] = (world) => SpecialLogic.savedAreas[1];
+        inWorld.rules[5] = (world) => Rule.PlacedItem(world, new ItemType("BrokenCake")) && Rule.PlacedItem(world, new ItemType("Forest Secret Key")) && SpecialLogic.savedAreas[3];
+        inWorld.rules[6] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[7] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[8] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[9] = (world) => Rule.PlacedItem(world, new ItemType("Top Cake")) && SpecialLogic.savedAreas[1];
         inWorld.rules[11] = (world) => Rule.PlacedItem(world, new ItemType("Manual")) && Rule.PlacedItem(world, new ItemType("C MENU"));
         inWorld.rules[12] = (world) => SpecialLogic.CanCompleteTutorial(world);
-        inWorld.rules[13] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && Rule.PlacedItem(world, new ItemType("Field Secret Key")) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[14] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[15] = (world) => Rule.PlacedItem(world, new ItemType("Forest Secret Key")) && SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[16] = (world) => Rule.PlacedItem(world, new ItemType("Forest Secret Key")) && SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[17] = (world) => Rule.PlacedItem(world, new ItemType("Forest Secret Key")) && SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[18] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[19] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[20] = (world) => Rule.PlacedItem(world, new ItemType("Door Key")) && SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[21] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[22] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[23] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && Rule.PlacedItem(world, new ItemType("Field Secret Key")) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[24] = (world) => Rule.PlacedItem(world, new ItemType("Door Key")) && SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[25] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[26] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[27] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[28] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[29] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[30] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[31] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[32] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[33] = (world) => Rule.PlacedItem(world, new ItemType("Broken Key A")) && Rule.PlacedItem(world, new ItemType("Broken Key B")) && Rule.PlacedItem(world, new ItemType("Broken Key C")) && Rule.PlacedItem(world, new ItemType("Forest Secret Key")) && SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[34] = (world) => SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[35] = (world) => SpecialLogic.AreaAccess(world, 4);
+        inWorld.rules[13] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && Rule.PlacedItem(world, new ItemType("Field Secret Key")) && SpecialLogic.savedAreas[1];
+        inWorld.rules[14] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[15] = (world) => Rule.PlacedItem(world, new ItemType("Forest Secret Key")) && SpecialLogic.savedAreas[3];
+        inWorld.rules[16] = (world) => Rule.PlacedItem(world, new ItemType("Forest Secret Key")) && SpecialLogic.savedAreas[3];
+        inWorld.rules[17] = (world) => Rule.PlacedItem(world, new ItemType("Forest Secret Key")) && SpecialLogic.savedAreas[3];
+        inWorld.rules[18] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[19] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[20] = (world) => Rule.PlacedItem(world, new ItemType("Door Key")) && SpecialLogic.savedAreas[4];
+        inWorld.rules[21] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[22] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[23] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && Rule.PlacedItem(world, new ItemType("Field Secret Key")) && SpecialLogic.savedAreas[1];
+        inWorld.rules[24] = (world) => Rule.PlacedItem(world, new ItemType("Door Key")) && SpecialLogic.savedAreas[4];
+        inWorld.rules[25] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.savedAreas[1];
+        inWorld.rules[26] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.savedAreas[1];
+        inWorld.rules[27] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.savedAreas[1];
+        inWorld.rules[28] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.savedAreas[1];
+        inWorld.rules[29] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[30] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[31] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[32] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[33] = (world) => Rule.PlacedItem(world, new ItemType("Broken Key A")) && Rule.PlacedItem(world, new ItemType("Broken Key B")) && Rule.PlacedItem(world, new ItemType("Broken Key C")) && Rule.PlacedItem(world, new ItemType("Forest Secret Key")) && SpecialLogic.savedAreas[3];
+        inWorld.rules[34] = (world) => SpecialLogic.savedAreas[1];
+        inWorld.rules[35] = (world) => SpecialLogic.savedAreas[4];
         inWorld.rules[36] = (world) => SpecialLogic.CanCompleteTutorial(world);
-        inWorld.rules[37] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[38] = (world) => SpecialLogic.AreaAccess(world, 2) && (SpecialLogic.ActAvailability(world) || world.options[3] == 1);
-        inWorld.rules[39] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[40] = (world) => SpecialLogic.AreaAccess(world, 1) && SpecialLogic.AreaAccess(world, 4);
+        inWorld.rules[37] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.savedAreas[1];
+        inWorld.rules[38] = (world) => SpecialLogic.savedAreas[2] && (SpecialLogic.ActAvailability(world) || world.options[3] == 1);
+        inWorld.rules[39] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[40] = (world) => SpecialLogic.savedAreas[1] && SpecialLogic.savedAreas[4];
         inWorld.rules[41] = (world) => Rule.PlacedItem(world, new ItemType("FIGHT")) || Rule.PlacedItem(world, new ItemType("DEFEND")) || Rule.PlacedItem(world, new ItemType("SPARE"));
         inWorld.rules[42] = (world) => SpecialLogic.UnlockedAreaCount(world, 1);
         inWorld.rules[43] = (world) => SpecialLogic.UnlockedAreaCount(world, 1);
@@ -959,39 +999,39 @@ public class Logic
         inWorld.rules[95] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Ralsei"));
         inWorld.rules[96] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Ralsei"));
         inWorld.rules[97] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[98] = (world) => (SpecialLogic.ActAvailability(world) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[99] = (world) => SpecialLogic.AreaAccess(world, 2);
-        inWorld.rules[100] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[101] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[102] = (world) => SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[103] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[110] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 1);
+        inWorld.rules[98] = (world) => (SpecialLogic.ActAvailability(world) || world.options[3] == 1) && SpecialLogic.savedAreas[4];
+        inWorld.rules[99] = (world) => SpecialLogic.savedAreas[2];
+        inWorld.rules[100] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[101] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[102] = (world) => SpecialLogic.savedAreas[1];
+        inWorld.rules[103] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[110] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.savedAreas[1];
         inWorld.rules[111] = (world) => Rule.PlacedItem(world, new ItemType("FIGHT")) || Rule.PlacedItem(world, new ItemType("DEFEND")) || Rule.PlacedItem(world, new ItemType("SPARE"));
-        inWorld.rules[112] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[113] = (world) => SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[114] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[115] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[116] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[117] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[118] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[119] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[120] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[121] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[122] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[126] = (world) => SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[127] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[128] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 1);
-        inWorld.rules[129] = (world) => SpecialLogic.AreaAccess(world, 2);
-        inWorld.rules[130] = (world) => SpecialLogic.AreaAccess(world, 2);
-        inWorld.rules[131] = (world) => SpecialLogic.AreaAccess(world, 2);
-        inWorld.rules[132] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[133] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[134] = (world) => SpecialLogic.AreaAccess(world, 3);
-        inWorld.rules[135] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[136] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[137] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[138] = (world) => (SpecialLogic.ActAvailability(world) || world.options[3] == 1) && SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[139] = (world) => SpecialLogic.AreaAccess(world, 4);
-        inWorld.rules[140] = (world) => SpecialLogic.AreaAccess(world, 1);
+        inWorld.rules[112] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[113] = (world) => SpecialLogic.savedAreas[1];
+        inWorld.rules[114] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.savedAreas[1];
+        inWorld.rules[115] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.savedAreas[1];
+        inWorld.rules[116] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.savedAreas[1];
+        inWorld.rules[117] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[118] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[119] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[120] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[121] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[122] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[126] = (world) => SpecialLogic.savedAreas[1];
+        inWorld.rules[127] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.savedAreas[1];
+        inWorld.rules[128] = (world) => (Rule.PlacedItem(world, new ItemType("RUN")) || world.options[3] == 1) && SpecialLogic.savedAreas[1];
+        inWorld.rules[129] = (world) => SpecialLogic.savedAreas[2];
+        inWorld.rules[130] = (world) => SpecialLogic.savedAreas[2];
+        inWorld.rules[131] = (world) => SpecialLogic.savedAreas[2];
+        inWorld.rules[132] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[133] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[134] = (world) => SpecialLogic.savedAreas[3];
+        inWorld.rules[135] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[136] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[137] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[138] = (world) => (SpecialLogic.ActAvailability(world) || world.options[3] == 1) && SpecialLogic.savedAreas[4];
+        inWorld.rules[139] = (world) => SpecialLogic.savedAreas[4];
+        inWorld.rules[140] = (world) => SpecialLogic.savedAreas[1];
     }
 }

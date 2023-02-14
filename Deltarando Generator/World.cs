@@ -532,7 +532,7 @@ public class World
 
     public void AddRooms()
     {
-        rooms.Add(new RoomType("room_castle_darkdoor", 1, new List<string>() { "room_field_starta" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Field Key")) }));
+        rooms.Add(new RoomType("room_castle_darkdoor", 1, new List<string>() { "room_field_starta" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Field Key")) && SpecialLogic.CanCompleteTutorial(world) }));
         rooms.Add(new RoomType("room_field_start", 2, new List<string>() { "room_field_foresta", "room_castle_darkdoorb" }));
         rooms.Add(new RoomType("room_field_forest", 2, new List<string>() { "room_field1a", "room_field_startb" }));
         rooms.Add(new RoomType("room_field1",5, new List<string>() { "room_field2a", "room_field_forestb" , "room_field_checkers4y", "room_forest_area0y", "room_cc_1fy" }, new List<Predicate<World>>() {world => Rule.ReturnTrue(world) ,world => Rule.ReturnTrue(world), world => Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")) }));
@@ -557,7 +557,7 @@ public class World
         rooms.Add(new RoomType("room_field_checkers1", 2, new List<string>() { "room_field_checkers5a", "room_field_checkers3b" }));
         rooms.Add(new RoomType("room_field_checkers5", 2, new List<string>() { "room_field_checkers7a", "room_field_checkers1b" }));
         rooms.Add(new RoomType("room_field_checkers7", 2, new List<string>() { "room_field_checkersbossa", "room_field_checkers5b" }));
-        rooms.Add(new RoomType("room_field_checkersboss", 2, new List<string>() { "room_forest_savepoint1a", "room_field_checkers7b" }));
+        rooms.Add(new RoomType("room_field_checkersboss", 2, new List<string>() { "room_forest_savepoint1a", "room_field_checkers7b" }, new List<Predicate<World>>() { world => SpecialLogic.ActAvailability(world) && Rule.PlacedItem(world, new ItemType("SPARE")), world => SpecialLogic.ActAvailability(world) && Rule.PlacedItem(world, new ItemType("SPARE")) }));
         rooms.Add(new RoomType("room_forest_savepoint1", 2, new List<string>() { "room_forest_area0a", "room_field_checkersbossb" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Forest Key")), world => SpecialLogic.ReturnTrue(world)}));
         rooms.Add(new RoomType("room_forest_area0", 5, new List<string>() { "room_forest_area1a", "room_forest_savepoint1b", "room_field1y", "room_field_checkers4y", "room_cc_1fy" }, new List<Predicate<World>>() { world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.PlacedItem(world, new ItemType("ForestShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("ForestShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("ForestShortcutDoor")) }));
         rooms.Add(new RoomType("room_forest_area1", 2, new List<string>() { "room_forest_area2a", "room_forest_area0b" }));
@@ -598,7 +598,7 @@ public class World
         rooms.Add(new RoomType("room_cc_clover", "room_cc_4fd"));
         rooms.Add(new RoomType("room_cc_5f", 5, new List<string>() { "room_cc_lancera", "room_cc_6fc", "room_cc_4ff", "room_shop2x", "room_cc_elevatorw" }));
         rooms.Add(new RoomType("room_cc_lancer", "room_cc_5fb"));
-        rooms.Add(new RoomType("room_cc_6f", 2, new List<string>() { "room_cc_thronerooma", "room_cc_5fd" }));
+        rooms.Add(new RoomType("room_cc_6f", 2, new List<string>() { "room_cc_thronerooma", "room_cc_5fd" }, new List<Predicate<World>>() { world => SpecialLogic.ActAvailability(world) && Rule.PlacedItem(world, new ItemType("SPARE")), world => SpecialLogic.ActAvailability(world) && Rule.PlacedItem(world, new ItemType("SPARE")) }));
         rooms.Add(new RoomType("room_cc_throneroom", 2, new List<string>() { "room_cc_preroofa", "room_cc_6fb" }));
         rooms.Add(new RoomType("room_cc_preroof", 1, new List<string>() { "room_cc_throneroomb" }));
         rooms.Add(new RoomType("room_shop2", "room_cc_5fx"));
@@ -1038,21 +1038,9 @@ public class World
             itemsJunk.Add(new ItemType("Wood Blade"));
             itemsJunk.Add(new ItemType("Mane Ax"));
             itemsJunk.Add(new ItemType("Red Scarf"));
-            itemsJunk.Add(new ItemType(" "));
-            itemsJunk.Add(new ItemType(" "));
-            itemsJunk.Add(new ItemType(" "));
-            itemsJunk.Add(new ItemType(" "));
-            itemsJunk.Add(new ItemType(" "));
-            itemsJunk.Add(new ItemType(" "));
             weaponKNames.Add("Wood Blade");
             weaponRNames.Add("Red Scarf");
             weaponSNames.Add("Mane Ax");
-            armorKNames.Add(" ");
-            armorRNames.Add(" ");
-            armorSNames.Add(" ");
-            armorKNames.Add(" ");
-            armorRNames.Add(" ");
-            armorSNames.Add(" ");
         }
         else
         {

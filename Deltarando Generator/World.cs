@@ -385,19 +385,11 @@ public class World
             var chosenItem = -1;
             lastLocations.Add(new List<ItemType>(locations));
             lastOrder.Add(new List<int>(locsOrder));
-            if ((items.Count <= 0 || toChooseFrom.Count > items.Count * 2) && itemsJunk.Count > 0)
+            if ((items.Count <= 0) && itemsJunk.Count > 0)
             {
-                if (itemsJunk.Exists(x => x.name == "Kingly Key Piece"))
+                if (itemsJunk.Exists(x => x.name.Contains("Kingly Key")))
                 {
-                    chosenItem = itemsJunk.FindIndex(x => x.name == "Kingly Key Piece");
-                    lastItems.Add(new ItemType(itemsJunk[chosenItem]));
-                    PlaceItem(chosen, itemsJunk[chosenItem]);
-                    placedJunkItem = chosenItem;
-                    itemsJunk.RemoveAt(chosenItem);
-                }
-                else if (itemsJunk.Exists(x => x.name == "Kingly Key"))
-                {
-                    chosenItem = itemsJunk.FindIndex(x => x.name == "Kingly Key");
+                    chosenItem = itemsJunk.FindIndex(x => x.name.Contains("Kingly Key"));
                     lastItems.Add(new ItemType(itemsJunk[chosenItem]));
                     PlaceItem(chosen, itemsJunk[chosenItem]);
                     placedJunkItem = chosenItem;
@@ -421,6 +413,7 @@ public class World
                 items.RemoveAt(chosenItem);
             }
             locsOrder.Add(chosen);
+            timeSinceBack++;
             if (timeSinceBack >= 7)
             {
                 foreach (var item in itemsRemoved)

@@ -161,8 +161,6 @@ namespace Deltarando_Generator
                     }
                 }
             }
-            globalItems = globalItems.OrderBy(x => rng.Next()).ToList();
-            globalJunkItems = globalJunkItems.OrderBy(x => rng.Next()).ToList();
             Console.WriteLine("Shuffling items...");
         }
         public static void Main(string[] args)

@@ -89,9 +89,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="optionsCH2.txt" />
-    <Content Include="Players\options.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="Players\options.txt" />
     <Content Include="Server\D3DX9_43.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

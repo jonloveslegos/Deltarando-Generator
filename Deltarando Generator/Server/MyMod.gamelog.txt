@@ -1,0 +1,124 @@
+Unable to find output device "null" defaulting to "Speakers / Headphones (Realtek Audio) via DirectSound"
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Connected: 127.0.0.1
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(2) Connected: 127.0.0.1
+Client(2) Disconnected: 127.0.0.1
+Client(1) Disconnected: 127.0.0.1
+---------------------------------------------------------------
+minFPS, maxFPS, avgFPS
+57, 2092, 1262
+---------------------------------------------------------------
+Unable to find output device "null" defaulting to "Speakers / Headphones (Realtek Audio) via DirectSound"
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Connected: 127.0.0.1
+Client(2) Connected: 127.0.0.1
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Disconnected: 127.0.0.1
+Client(2) Disconnected: 127.0.0.1
+---------------------------------------------------------------
+minFPS, maxFPS, avgFPS
+28, 2232, 1040
+---------------------------------------------------------------
+Unable to find output device "null" defaulting to "Speakers / Headphones (Realtek Audio) via DirectSound"
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Connected: 127.0.0.1
+Client(2) Connected: 127.0.0.1
+Client(1) Disconnected: 127.0.0.1
+Client(2) Disconnected: 127.0.0.1
+---------------------------------------------------------------
+minFPS, maxFPS, avgFPS
+53, 2288, 1261
+---------------------------------------------------------------
+Unable to find output device "null" defaulting to "Speakers / Headphones (Realtek Audio) via DirectSound"
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Connected: 127.0.0.1
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Disconnected: 127.0.0.1
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Connected: 127.0.0.1
+Client(2) Connected: 127.0.0.1
+Client(1) Disconnected: 127.0.0.1
+Client(2) Disconnected: 127.0.0.1
+Pause event has been registered for this frame
+Pause event has been unregistered
+---------------------------------------------------------------
+minFPS, maxFPS, avgFPS
+25, 2386, 1350
+---------------------------------------------------------------
+Unable to find output device "null" defaulting to "Speakers / Headphones (Realtek Audio) via DirectSound"
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Connected: 127.0.0.1
+Client(2) Connected: 127.0.0.1
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Disconnected: 127.0.0.1
+---------------------------------------------------------------
+minFPS, maxFPS, avgFPS
+33, 2309, 1483
+---------------------------------------------------------------
+Unable to find output device "null" defaulting to "Speakers / Headphones (Realtek Audio) via DirectSound"
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Connected: 127.0.0.1
+Client(2) Connected: 127.0.0.1
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+Pause event has been registered for this frame
+Pause event has been unregistered
+---------------------------------------------------------------
+minFPS, maxFPS, avgFPS
+41, 2207, 1499
+---------------------------------------------------------------
+Unable to find output device "null" defaulting to "Speakers / Headphones (Realtek Audio) via DirectSound"
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Connected: 127.0.0.1
+Client(2) Connected: 127.0.0.1
+Pause event has been registered for this frame
+Pause event has been unregistered
+Client(1) Disconnected: 127.0.0.1
+Client(2) Disconnected: 127.0.0.1
+---------------------------------------------------------------
+minFPS, maxFPS, avgFPS
+59, 2197, 1524
+---------------------------------------------------------------

@@ -9,176 +9,327 @@ namespace Deltarando_Generator
 {
     class Program
     {
-        public static void Main(string[] args)
+        public static Random rng = new Random();
+        public static List<World> worlds = new List<World>();
+        public static List<ItemType> globalItems = new List<ItemType>();
+        public static List<ItemType> globalLocations = new List<ItemType>();
+        public static List<ItemType> globalJunkItems = new List<ItemType>();
+        public static bool Randomize()
         {
-            World world = new World();
-            Logic logic = new Logic();
-            var rng = new Random();
-            logic.SetLogic(world);
-            world.AddItems();
-            world.AddRooms();
-            /*World world2 = new World();
-            logic.SetLogic(world2);
-            world2.AddItems();
-            world2.AddRooms();
-            List<ItemType> globalItems = new List<ItemType>();
-            List<ItemType> globalJunkItems = new List<ItemType>();
-            foreach (var item in world.items)
+            globalLocations = new List<ItemType>();
+            foreach (var item in worlds)
             {
-                globalItems.Add(new ItemType("001"+item.name));
+                globalLocations.AddRange(item.locations);
             }
-            foreach (var item in world.itemsJunk)
+            foreach (var item in worlds)
             {
-                globalJunkItems.Add(new ItemType("001" + item.name));
+                item.RandomizeStart();
             }
-            foreach (var item in world2.items)
+            int chosenWorld = 0;
+            while (globalLocations.Exists(x => x.name == "Null") || globalItems.Exists(x => x.name.Contains("Kingly Key")) || globalJunkItems.Exists(x => x.name.Contains("Kingly Key")))
             {
-                globalItems.Add(new ItemType("002" + item.name));
-            }
-            foreach (var item in world2.itemsJunk)
-            {
-                globalJunkItems.Add(new ItemType("002" + item.name));
-            }
-            globalItems = globalItems.OrderBy(x => rng.Next()).ToList();
-            globalJunkItems = globalJunkItems.OrderBy(x => rng.Next()).ToList();
-            if (world2.options[39] == 1)
-            {
-                while (!world2.ShuffleRooms())
+                globalLocations = new List<ItemType>();
+                for (int f = 0; f < worlds.Count; f++)
                 {
-                    world2.rooms.Clear();
-                    world2.AddRooms();
-                }
-            }*/
-            if (world.options[39] == 1)
-            {
-                while (!world.ShuffleRooms())
-                {
-                    world.rooms.Clear();
-                    world.AddRooms();
-                }
-            }
-            while (!world.Randomize())
-            {
-                world = new World();
-                logic = new Logic();
-                logic.SetLogic(world);
-                world.AddItems();
-                world.AddRooms();
-                /*
-                world2 = new World();
-                logic.SetLogic(world2);
-                world2.AddItems();
-                world2.AddRooms();
-                */
-                if (world.options[39] == 1)
-                {
-                    while (!world.ShuffleRooms())
+                    List<ItemType> tempLocs = new List<ItemType>(worlds[f].locations);
+                    for (int r = 0; r < worlds[f].starting.Count; r++)
                     {
-                        world.rooms.Clear();
-                        world.AddRooms();
+                        tempLocs.Add(new ItemType(worlds[f].myId + worlds[f].starting[r].name));
                     }
-                }
-            }
-            var seed = File.CreateText(Directory.GetCurrentDirectory() + "/deltarando.seed");
-            for (int i = 0; i < world.options.Count; i++)
-            {
-                seed.WriteLine(i);
-                seed.WriteLine(world.options[i]);
-            }
-            for (int i = 0; i < world.rooms.Count; i++)
-            {
-                seed.WriteLine(world.rooms[i].name);
-                var tempConnects = new List<string>();
-                for (int e = 0; e < world.rooms[i].connections.Count; e++)
-                {
-                    if (world.rooms[i].connections[e].Length > 0)
+                    for (int r = 0; r < worlds[f].trueStarting.Count; r++)
                     {
-                        if (world.rooms[i].connections[e][world.rooms[i].connections[e].Length - 1].ToString() == "y")
+                        tempLocs.Add(new ItemType(worlds[f].myId + worlds[f].trueStarting[r].name));
+                    }
+                    foreach (var item in tempLocs)
+                    {
+                        if (item.name.Length > 3 && item.name != "Null")
                         {
-                            world.rooms[i].connections[e] = "-1";
+                            if (!int.TryParse(item.name[0].ToString(), out int temp))
+                            {
+                                globalLocations.Add(new ItemType(worlds[f].myId + item.name));
+                            }
+                            else
+                            {
+                                globalLocations.Add(item);
+                            }
+                        }
+                    }
+                    foreach (var item in tempLocs)
+                    {
+                        if (item.name == "Null")
+                        {
+                            globalLocations.Add(item);
                         }
                     }
                 }
-                for (int e = 0; e < world.rooms[i].connections.Count; e++)
+                worlds[chosenWorld].items = globalItems;
+                worlds[chosenWorld].itemsJunk = globalJunkItems;
+                if (!worlds[chosenWorld].Randomize())
                 {
-                    seed.WriteLine(world.rooms[i].connections[e]);
-                }
-                for (int e = world.rooms[i].connections.Count; e < 10; e++)
-                {
-                    seed.WriteLine("-1");
-                }
-            }
-            for (int i = 0; i < 200; i++)
-            {
-                for (int e = 0; e < 3; e++)
-                {
-                    seed.WriteLine(world.enemyIds[world.rng.Next(world.enemyIds.Count)]);
-                }
-            }
-            for (int i = 0; i < world.trueStarting.Count; i++)
-            {
-                if (world.trueStarting[i].name != "")
-                {
-                    seed.WriteLine(-1);
-                    seed.WriteLine(world.trueStarting[i].name);
-                }
-            }
-            for (int i = 0; i < world.starting.Count; i++)
-            {
-                if (world.starting[i].name != "")
-                {
-                    seed.WriteLine(-2);
-                    seed.WriteLine(world.starting[i].name);
-                }
-            }
-            for (int i = 0; i < 3; i++)
-            {
-                if (world.equipment[i].name != "")
-                {
-                    seed.WriteLine(-i-10);
-                    seed.WriteLine(world.equipment[i].name);
+                    return false;
                 }
                 else
                 {
-                    seed.WriteLine(-i - 10);
-                    seed.WriteLine("Hands");
+                    globalItems = worlds[chosenWorld].items;
+                    globalJunkItems = worlds[chosenWorld].itemsJunk;
+                }
+                chosenWorld++;
+                if (chosenWorld >= worlds.Count)
+                {
+                    chosenWorld = 0;
                 }
             }
-            for (int i = 3; i < 6; i++)
+            return true;
+        }
+        public static void Setup()
+        {
+            worlds = new List<World>();
+            if (!Directory.Exists(Directory.GetCurrentDirectory() + "/Players"))
             {
-                if (world.equipment[i].name != "")
+                Directory.CreateDirectory(Directory.GetCurrentDirectory() + "/Players");
+            }
+            var allPlayers = Directory.GetFiles(Directory.GetCurrentDirectory() + "/Players/");
+            foreach (var item in allPlayers)
+            {
+                var tempWorld = new World();
+                tempWorld.myFile = item.Split('/')[item.Split('/').Length - 1];
+                tempWorld.SetOptions();
+                worlds.Add(tempWorld);
+            }
+            globalItems = new List<ItemType>();
+            globalJunkItems = new List<ItemType>();
+            for (int i = 0; i < worlds.Count; i++)
+            {
+                worlds[i].ShuffleStart();
+                if (i.ToString().Length == 3)
                 {
-                    seed.WriteLine(-i - 20+3);
-                    seed.WriteLine(world.equipment[i].name);
+                    worlds[i].myId = i.ToString();
+                    foreach (var item in worlds[i].items)
+                    {
+                        globalItems.Add(new ItemType(i.ToString() + item.name));
+                    }
+                    foreach (var item in worlds[i].itemsJunk)
+                    {
+                        globalJunkItems.Add(new ItemType(i.ToString() + item.name));
+                    }
                 }
-                else
+                else if (i.ToString().Length == 2)
                 {
-                    seed.WriteLine(-i - 20+3);
-                    seed.WriteLine(" ");
+                    worlds[i].myId = "0" + i.ToString();
+                    foreach (var item in worlds[i].items)
+                    {
+                        globalItems.Add(new ItemType("0" + i.ToString() + item.name));
+                    }
+                    foreach (var item in worlds[i].itemsJunk)
+                    {
+                        globalJunkItems.Add(new ItemType("0" + i.ToString() + item.name));
+                    }
+                }
+                else if (i.ToString().Length == 1)
+                {
+                    worlds[i].myId = "00" + i.ToString();
+                    foreach (var item in worlds[i].items)
+                    {
+                        globalItems.Add(new ItemType("00" + i.ToString() + item.name));
+                    }
+                    foreach (var item in worlds[i].itemsJunk)
+                    {
+                        globalJunkItems.Add(new ItemType("00" + i.ToString() + item.name));
+                    }
+                }
+                else if (i.ToString().Length == 0)
+                {
+                    worlds[i].myId = "000" + i.ToString();
+                    foreach (var item in worlds[i].items)
+                    {
+                        globalItems.Add(new ItemType("000" + i.ToString() + item.name));
+                    }
+                    foreach (var item in worlds[i].itemsJunk)
+                    {
+                        globalJunkItems.Add(new ItemType("000" + i.ToString() + item.name));
+                    }
+                }
+                worlds[i].items.Clear();
+                worlds[i].itemsJunk.Clear();
+                if (worlds[i].options[39] == 1)
+                {
+                    while (!worlds[i].ShuffleRooms())
+                    {
+                        worlds[i].rooms.Clear();
+                        worlds[i].enemyRooms.Clear();
+                        worlds[i].AddRooms();
+                    }
                 }
             }
-            for (int i = 6; i < 9; i++)
+            globalItems = globalItems.OrderBy(x => rng.Next()).ToList();
+            globalJunkItems = globalJunkItems.OrderBy(x => rng.Next()).ToList();
+            Console.WriteLine("Shuffling items...");
+        }
+        public static void Main(string[] args)
+        {
+            Setup();
+            while (!Randomize())
             {
-                if (world.equipment[i].name != "")
-                {
-                    seed.WriteLine(-i - 30+6);
-                    seed.WriteLine(world.equipment[i].name);
-                }
-                else
-                {
-                    seed.WriteLine(-i - 30+6);
-                    seed.WriteLine(" ");
-                }
+                Setup();
             }
-            for (int i = 0; i < world.locations.Count; i++)
+            for (int y = 0; y < worlds.Count; y++)
             {
-                if (world.locations[i].name != "")
+                if (!Directory.Exists(Directory.GetCurrentDirectory() + "/output"))
+                {
+                    Directory.CreateDirectory(Directory.GetCurrentDirectory() + "/output");
+                }
+                var seed = File.CreateText(Directory.GetCurrentDirectory() + "/output/deltarando_player_" + worlds[y].myName + ".seed");
+                seed.WriteLine(y);
+                for (int i = 0; i < worlds[y].options.Count; i++)
                 {
                     seed.WriteLine(i);
-                    seed.WriteLine(world.locations[i].name);
+                    seed.WriteLine(worlds[y].options[i]);
                 }
+                for (int i = 0; i < worlds[y].rooms.Count; i++)
+                {
+                    seed.WriteLine(worlds[y].rooms[i].name);
+                    var tempConnects = new List<string>();
+                    for (int e = 0; e < worlds[y].rooms[i].connections.Count; e++)
+                    {
+                        if (worlds[y].rooms[i].connections[e].Length > 0)
+                        {
+                            if (worlds[y].rooms[i].connections[e][worlds[y].rooms[i].connections[e].Length - 1].ToString() == "y")
+                            {
+                                worlds[y].rooms[i].connections[e] = "-1";
+                            }
+                        }
+                    }
+                    for (int e = 0; e < worlds[y].rooms[i].connections.Count; e++)
+                    {
+                        seed.WriteLine(worlds[y].rooms[i].connections[e]);
+                    }
+                    for (int e = worlds[y].rooms[i].connections.Count; e < 10; e++)
+                    {
+                        seed.WriteLine("-1");
+                    }
+                }
+                for (int i = 0; i < 200; i++)
+                {
+                    for (int e = 0; e < 3; e++)
+                    {
+                        seed.WriteLine(worlds[y].enemyIds[rng.Next(worlds[y].enemyIds.Count)]);
+                    }
+                }
+                for (int i = 0; i < worlds[y].trueStarting.Count; i++)
+                {
+                    if (worlds[y].trueStarting[i].name != "")
+                    {
+                        seed.WriteLine(-1);
+                        if (worlds[y].trueStarting[i].name.StartsWith(worlds[y].myId))
+                        {
+                            seed.WriteLine(worlds[y].trueStarting[i].name.Remove(0,3));
+                        }
+                        else
+                        {
+                            seed.WriteLine(worlds[y].trueStarting[i].name);
+                        }
+                    }
+                }
+                for (int i = 0; i < worlds[y].starting.Count; i++)
+                {
+                    if (worlds[y].starting[i].name != "")
+                    {
+                        seed.WriteLine(-2);
+                        if (worlds[y].starting[i].name.StartsWith(worlds[y].myId))
+                        {
+                            seed.WriteLine(worlds[y].starting[i].name.Remove(0, 3));
+                        }
+                        else
+                        {
+                            seed.WriteLine(worlds[y].starting[i].name);
+                        }
+                    }
+                }
+                for (int i = 0; i < 3; i++)
+                {
+                    if (worlds[y].equipment[i].name != "")
+                    {
+                        seed.WriteLine(-i - 10);
+                        seed.WriteLine(worlds[y].equipment[i].name);
+                    }
+                    else
+                    {
+                        seed.WriteLine(-i - 10);
+                        seed.WriteLine("Hands");
+                    }
+                }
+                for (int i = 3; i < 6; i++)
+                {
+                    if (worlds[y].equipment[i].name != "")
+                    {
+                        seed.WriteLine(-i - 20 + 3);
+                        seed.WriteLine(worlds[y].equipment[i].name);
+                    }
+                    else
+                    {
+                        seed.WriteLine(-i - 20 + 3);
+                        seed.WriteLine(" ");
+                    }
+                }
+                for (int i = 6; i < 9; i++)
+                {
+                    if (worlds[y].equipment[i].name != "")
+                    {
+                        seed.WriteLine(-i - 30 + 6);
+                        seed.WriteLine(worlds[y].equipment[i].name);
+                    }
+                    else
+                    {
+                        seed.WriteLine(-i - 30 + 6);
+                        seed.WriteLine(" ");
+                    }
+                }
+                for (int i = 0; i < worlds[y].locations.Count; i++)
+                {
+                    if (worlds[y].locations[i].name != "")
+                    {
+                        seed.WriteLine(i);
+                        if (worlds[y].locations[i].name.StartsWith(worlds[y].myId))
+                        {
+                            seed.WriteLine(worlds[y].locations[i].name.Remove(0, 3));
+                        }
+                        else
+                        {
+                            seed.WriteLine(worlds[y].locations[i].name);
+                        }
+                    }
+                }
+                seed.Close();
+                var textLoc = File.OpenText(Directory.GetCurrentDirectory() + "/locations.txt");
+                Dictionary<int, string> locNameDict = new Dictionary<int, string>();
+                while (!textLoc.EndOfStream)
+                {
+                    var itm = textLoc.ReadLine();
+                    if (itm.Length > 3)
+                    {
+                        int locId = int.Parse(itm.Split(' ')[0]);
+                        string locName = itm.Split(' ')[1];
+                        locNameDict.Add(locId, locName);
+                    }
+                }
+                if (worlds[y].options[55] == 1)
+                {
+                    var spoiler = File.CreateText(Directory.GetCurrentDirectory() + "/output/spoiler_player_"+worlds[y].myName+".txt");
+                    for (int i = 0; i < worlds[y].locsOrder.Count; i++)
+                    {
+                        if (worlds[y].locations[worlds[y].locsOrder[i]].name.StartsWith(worlds[y].myId))
+                        {
+                            spoiler.WriteLine(locNameDict[worlds[y].locsOrder[i]] + " => " + worlds[y].locations[worlds[y].locsOrder[i]].name.Remove(0,3) + "\n");
+                        }
+                        else
+                        {
+                            spoiler.WriteLine(locNameDict[worlds[y].locsOrder[i]] + " => "+ worlds[int.Parse(worlds[y].locations[worlds[y].locsOrder[i]].name.Remove(3, worlds[y].locations[worlds[y].locsOrder[i]].name.Length-3))].myName + "'s " + worlds[y].locations[worlds[y].locsOrder[i]].name.Remove(0, 3) + "\n");
+                        }
+                    }
+                    spoiler.Close();
+                }
+
             }
-            seed.Close();
         }
     }
 }

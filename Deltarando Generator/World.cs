@@ -21,6 +21,7 @@ public struct ItemType
 public struct RoomType
 {
     public string name;
+    public bool hasEnemies;
     public List<string> connections;
     public List<Predicate<World>> connectionRules;
     public RoomType(RoomType itemType)
@@ -28,12 +29,14 @@ public struct RoomType
         name = itemType.name;
         connectionRules = itemType.connectionRules;
         connections = itemType.connections;
+        hasEnemies = itemType.hasEnemies;
     }
     public RoomType(string itemId, int connectionCount, List<string> defaultConnections, List<Predicate<World>> defaultRules)
     {
         name = itemId;
         connectionRules = defaultRules;
         connections = defaultConnections;
+        hasEnemies = false;
     }
     public RoomType(string itemId, string MainConnection, Predicate<World> defaultRules)
     {
@@ -42,6 +45,7 @@ public struct RoomType
         connectionRules.Add(defaultRules);
         connections = new List<string>();
         connections.Add(MainConnection);
+        hasEnemies = false;
     }
     public RoomType(string itemId, int connectionCount, List<string> defaultConnections)
     {
@@ -52,6 +56,7 @@ public struct RoomType
         {
             connectionRules.Add((world) => SpecialLogic.ReturnTrue(world));
         }
+        hasEnemies = false;
     }
     public RoomType(string itemId, string MainConnection)
     {
@@ -60,6 +65,43 @@ public struct RoomType
         connectionRules.Add((world) => SpecialLogic.ReturnTrue(world));
         connections = new List<string>();
         connections.Add(MainConnection);
+        hasEnemies = false;
+    }
+    public RoomType(string itemId, bool hasEnemy, int connectionCount, List<string> defaultConnections, List<Predicate<World>> defaultRules)
+    {
+        name = itemId;
+        connectionRules = defaultRules;
+        connections = defaultConnections;
+        hasEnemies = hasEnemy;
+    }
+    public RoomType(string itemId, bool hasEnemy, string MainConnection, Predicate<World> defaultRules)
+    {
+        name = itemId;
+        connectionRules = new List<Predicate<World>>();
+        connectionRules.Add(defaultRules);
+        connections = new List<string>();
+        connections.Add(MainConnection);
+        hasEnemies = hasEnemy;
+    }
+    public RoomType(string itemId, bool hasEnemy, int connectionCount, List<string> defaultConnections)
+    {
+        name = itemId;
+        connectionRules = new List<Predicate<World>>();
+        connections = defaultConnections;
+        for (int i = 0; i < connectionCount; i++)
+        {
+            connectionRules.Add((world) => SpecialLogic.ReturnTrue(world));
+        }
+        hasEnemies = hasEnemy;
+    }
+    public RoomType(string itemId, bool hasEnemy, string MainConnection)
+    {
+        name = itemId;
+        connectionRules = new List<Predicate<World>>();
+        connectionRules.Add((world) => SpecialLogic.ReturnTrue(world));
+        connections = new List<string>();
+        connections.Add(MainConnection);
+        hasEnemies = hasEnemy;
     }
 }
 
@@ -67,15 +109,7 @@ public static class Rule
 {
     public static bool PlacedItem(World world, ItemType itemId)
     {
-        if (world.locations.Exists(x => x.name == itemId.name))
-        {
-            return true;
-        }
-        if (world.starting.Exists(x => x.name == itemId.name))
-        {
-            return true;
-        }
-        if (world.trueStarting.Exists(x => x.name == itemId.name))
+        if (Deltarando_Generator.Program.globalLocations.Exists(x => x.name == world.myId + itemId.name))
         {
             return true;
         }
@@ -94,6 +128,7 @@ public class World
     public List<ItemType> wantedLocs = new List<ItemType>();
     public List<ItemType> items = new List<ItemType>();
     public List<RoomType> rooms = new List<RoomType>();
+    public List<int> enemyRooms = new List<int>();
     public List<ItemType> itemsJunk = new List<ItemType>();
     public List<ItemType> starting = new List<ItemType>();
     public List<ItemType> trueStarting = new List<ItemType>();
@@ -106,7 +141,20 @@ public class World
     public List<int> enemyIds = new List<int>();
     public List<Predicate<World>> rules = new List<Predicate<World>>();
     public List<int> options = new List<int>();
-    public Random rng = new Random();
+    public List<int> locsOrder = new List<int>();
+    public List<ItemType> itemsRemoved = new List<ItemType>();
+    public string myName = "DEFAULT";
+    public string myFile = "options.txt";
+    public string myId = "000";
+    List<List<ItemType>> lastLocations = new List<List<ItemType>>();
+    List<List<int>> lastOrder = new List<List<int>>();
+    List<ItemType> lastItems = new List<ItemType>();
+    int backCount = 0;
+    List<int> emptyLocs = new List<int>();
+    int startEmptyCount = 0;
+    public int placedItem = -1;
+    public int placedJunkItem = -1;
+    public int timeSinceBack = 0;
     public World()
     {
         for (var i = 0; i < 300; i++)
@@ -156,13 +204,20 @@ public class World
         enemyIds.Add(14);
         enemyIds.Add(13);
         enemyIds.Add(6);
-        var file = File.OpenText(Directory.GetCurrentDirectory() + "/options.txt");
+    }
+    public void SetOptions()
+    {
+        var file = File.OpenText(Directory.GetCurrentDirectory() + "/Players/" + myFile);
         while (!file.EndOfStream)
         {
             var itm = file.ReadLine();
             if (itm.Length > 3)
             {
-                if (itm.Split('=')[1].ToLower() != "true" && itm.Split('=')[1].ToLower() != "false")
+                if (int.Parse(itm.Split('(', ')')[1]) == -1)
+                {
+                    myName = itm.Split('=')[1];
+                }
+                else if (itm.Split('=')[1].ToLower() != "true" && itm.Split('=')[1].ToLower() != "false")
                 {
                     options[int.Parse(itm.Split('(', ')')[1])] = int.Parse(itm.Split('=')[1]);
                 }
@@ -189,14 +244,15 @@ public class World
     {
         wantedLocs[locationId] = new ItemType(itemListId);
     }
-
-    public bool Randomize()
+    public void RandomizeStart()
     {
-        var lastLocations = new List<List<ItemType>>();
-        var lastItems = new List<ItemType>();
-        var itemsRemoved = new List<ItemType>();
-        int timeSinceBack = 0;
-        int backCount = 0;
+
+        lastLocations = new List<List<ItemType>>();
+        lastOrder = new List<List<int>>();
+        lastItems = new List<ItemType>();
+        itemsRemoved = new List<ItemType>();
+        backCount = 0;
+        timeSinceBack = 0;
         if (options[1] > 0)
         {
             for (int i = 0; i < options[1]; i++)
@@ -204,120 +260,32 @@ public class World
                 var chosenItem = 0;
                 if (items.Count <= 0)
                 {
-                    chosenItem = rng.Next(itemsJunk.Count);
+                    chosenItem = Deltarando_Generator.Program.rng.Next(itemsJunk.Count);
                     trueStarting.Add(itemsJunk[chosenItem]);
                     itemsJunk.RemoveAt(chosenItem);
                 }
                 else
                 {
-                    chosenItem = rng.Next(items.Count);
+                    chosenItem = Deltarando_Generator.Program.rng.Next(items.Count);
                     trueStarting.Add(items[chosenItem]);
                     items.RemoveAt(chosenItem);
                 }
             }
         }
-        /*
-        if (options[75] == 1)
+        emptyLocs = new List<int>();
+        startEmptyCount = 0;
+        for (int i = 0; i < locations.Count; i++)
         {
-            List<ItemType> tempItems = new List<ItemType>();
-            for (int i = 0; i < itemsJunk.Count; i++)
+            if (locations[i].name == "Null")
             {
-                if (weaponKNames.Contains(itemsJunk[i].name))
-                {
-                    tempItems.Add(itemsJunk[i]);
-                }
+                emptyLocs.Add(i);
             }
-            equipment[0] = tempItems[rng.Next(0, tempItems.Count)];
-            itemsJunk.Remove(equipment[0]);
-            tempItems = new List<ItemType>();
-            for (int i = 0; i < itemsJunk.Count; i++)
-            {
-                if (weaponSNames.Contains(itemsJunk[i].name))
-                {
-                    tempItems.Add(itemsJunk[i]);
-                }
-            }
-            equipment[1] = tempItems[rng.Next(0, tempItems.Count)];
-            itemsJunk.Remove(equipment[1]);
-            tempItems = new List<ItemType>();
-            for (int i = 0; i < itemsJunk.Count; i++)
-            {
-                if (weaponRNames.Contains(itemsJunk[i].name))
-                {
-                    tempItems.Add(itemsJunk[i]);
-                }
-            }
-            equipment[2] = tempItems[rng.Next(0, tempItems.Count)];
-            itemsJunk.Remove(equipment[2]);
-            tempItems = new List<ItemType>();
         }
-        if (options[78] == 1)
-        {
-            List<ItemType> tempItems = new List<ItemType>();
-            for (int i = 0; i < itemsJunk.Count; i++)
-            {
-                if (armorKNames.Contains(itemsJunk[i].name))
-                {
-                    tempItems.Add(itemsJunk[i]);
-                }
-            }
-            equipment[3] = tempItems[rng.Next(0, tempItems.Count)];
-            itemsJunk.Remove(equipment[3]);
-            tempItems = new List<ItemType>();
-            for (int i = 0; i < itemsJunk.Count; i++)
-            {
-                if (armorSNames.Contains(itemsJunk[i].name))
-                {
-                    tempItems.Add(itemsJunk[i]);
-                }
-            }
-            equipment[4] = tempItems[rng.Next(0, tempItems.Count)];
-            itemsJunk.Remove(equipment[4]);
-            tempItems = new List<ItemType>();
-            for (int i = 0; i < itemsJunk.Count; i++)
-            {
-                if (armorRNames.Contains(itemsJunk[i].name))
-                {
-                    tempItems.Add(itemsJunk[i]);
-                }
-            }
-            equipment[5] = tempItems[rng.Next(0, tempItems.Count)];
-            itemsJunk.Remove(equipment[5]);
-            tempItems = new List<ItemType>();
-            for (int i = 0; i < itemsJunk.Count; i++)
-            {
-                if (armorKNames.Contains(itemsJunk[i].name))
-                {
-                    tempItems.Add(itemsJunk[i]);
-                }
-            }
-            equipment[6] = tempItems[rng.Next(0, tempItems.Count)];
-            itemsJunk.Remove(equipment[6]);
-            tempItems = new List<ItemType>();
-            for (int i = 0; i < itemsJunk.Count; i++)
-            {
-                if (armorSNames.Contains(itemsJunk[i].name))
-                {
-                    tempItems.Add(itemsJunk[i]);
-                }
-            }
-            equipment[7] = tempItems[rng.Next(0, tempItems.Count)];
-            itemsJunk.Remove(equipment[7]);
-            tempItems = new List<ItemType>();
-            for (int i = 0; i < itemsJunk.Count; i++)
-            {
-                if (armorRNames.Contains(itemsJunk[i].name))
-                {
-                    tempItems.Add(itemsJunk[i]);
-                }
-            }
-            equipment[8] = tempItems[rng.Next(0, tempItems.Count)];
-            itemsJunk.Remove(equipment[8]);
-            tempItems = new List<ItemType>();
-        }*/
-        while (locations.Exists(x => x.name == "Null") || items.Exists(x => x.name == "Kingly Key Piece") || itemsJunk.Exists(x => x.name == "Kingly Key Piece") || items.Exists(x => x.name == "Kingly Key") || itemsJunk.Exists(x => x.name == "Kingly Key"))
-        {
-            List<int> emptyLocs = new List<int>();
+        startEmptyCount = emptyLocs.Count - wantedLocs.FindAll(x => x.name != "").Count;
+    }
+    public bool Randomize()
+    {
+            emptyLocs = new List<int>();
             for (int i = 0; i < locations.Count; i++)
             {
                 if (locations[i].name == "Null")
@@ -333,110 +301,136 @@ public class World
                     toChooseFrom.Add(emptyLocs[i]);
                 }
             }
+            bool foundWanted = false;
             foreach (var item in toChooseFrom)
             {
                 if (wantedLocs[item].name != "")
                 {
                     PlaceItem(item, new ItemType(wantedLocs[item]));
-                    emptyLocs.Remove(item);
+                    foundWanted = true;
                 }
             }
-            toChooseFrom = new List<int>();
-            for (int i = 0; i < emptyLocs.Count; i++)
+            while (foundWanted)
             {
-                if (rules[emptyLocs[i]].Invoke(this))
+                emptyLocs = new List<int>();
+                for (int i = 0; i < locations.Count; i++)
                 {
-                    toChooseFrom.Add(emptyLocs[i]);
+                    if (locations[i].name == "Null")
+                    {
+                        emptyLocs.Add(i);
+                    }
+                }
+                toChooseFrom = new List<int>();
+                for (int i = 0; i < emptyLocs.Count; i++)
+                {
+                    if (rules[emptyLocs[i]].Invoke(this))
+                    {
+                        toChooseFrom.Add(emptyLocs[i]);
+                    }
+                }
+                foundWanted = false;
+                foreach (var item in toChooseFrom)
+                {
+                    if (wantedLocs[item].name != "")
+                    {
+                        PlaceItem(item, new ItemType(wantedLocs[item]));
+                        foundWanted = true;
+                    }
                 }
             }
-            if (items.Count + itemsJunk.Count <= 0)
+        if (items.Count + itemsJunk.Count <= 0)
+        {
+            if (emptyLocs.Count > 0)
             {
+                Console.WriteLine("Retrying...");
                 return false;
             }
-            else if (toChooseFrom.Count <= 0)
+        }
+        else if (toChooseFrom.Count <= 0)
+        {
+            if (emptyLocs.Count > 0)
             {
                 for (int i = 0; i < Math.Min(10, backCount); i++)
                 {
                     if (lastLocations.Count > 1)
                     {
                         locations = new List<ItemType>(lastLocations[lastLocations.Count - 1]);
+                        locsOrder = new List<int>(lastOrder[lastOrder.Count - 1]);
                         if (!(lastItems[lastItems.Count - 1].name == "Null"))
                         {
                             itemsRemoved.Add(new ItemType(lastItems[lastItems.Count - 1]));
                         }
                         lastLocations.RemoveAt(lastLocations.Count - 1);
+                        lastOrder.RemoveAt(lastOrder.Count - 1);
                         lastItems.RemoveAt(lastItems.Count - 1);
                     }
                 }
                 locations = new List<ItemType>(lastLocations[lastLocations.Count - 1]);
+                locsOrder = new List<int>(lastOrder[lastOrder.Count - 1]);
                 if (!(lastItems[lastItems.Count - 1].name == "Null"))
                 {
                     itemsRemoved.Add(new ItemType(lastItems[lastItems.Count - 1]));
                 }
                 lastLocations.RemoveAt(lastLocations.Count - 1);
+                lastOrder.RemoveAt(lastOrder.Count - 1);
                 lastItems.RemoveAt(lastItems.Count - 1);
-                timeSinceBack = 0;
                 backCount++;
+                timeSinceBack = 0;
+                Console.WriteLine("Undid placement");
             }
-            else
+        }
+        else
+        {
+            int chosen = toChooseFrom[Deltarando_Generator.Program.rng.Next(toChooseFrom.Count)];
+            var chosenItem = -1;
+            lastLocations.Add(new List<ItemType>(locations));
+            lastOrder.Add(new List<int>(locsOrder));
+            if ((items.Count <= 0 || toChooseFrom.Count > items.Count * 2) && itemsJunk.Count > 0)
             {
-                int chosen = toChooseFrom[rng.Next(toChooseFrom.Count)];
-                var chosenItem = -1;
-                lastLocations.Add(new List<ItemType>(locations));
-                if ((items.Count <= 0 || toChooseFrom.Count > items.Count * 2) && itemsJunk.Count > 0)
+                if (itemsJunk.Exists(x => x.name == "Kingly Key Piece"))
                 {
-                    if (itemsJunk.Exists(x => x.name == "Kingly Key Piece"))
-                    {
-                        chosenItem = itemsJunk.FindIndex(x => x.name == "Kingly Key Piece");
-                        lastItems.Add(new ItemType(itemsJunk[chosenItem]));
-                        PlaceItem(chosen, itemsJunk[chosenItem]);
-                        itemsJunk.RemoveAt(chosenItem);
-                    }
-                    else if (itemsJunk.Exists(x => x.name == "Kingly Key"))
-                    {
-                        chosenItem = itemsJunk.FindIndex(x => x.name == "Kingly Key");
-                        lastItems.Add(new ItemType(itemsJunk[chosenItem]));
-                        PlaceItem(chosen, itemsJunk[chosenItem]);
-                        itemsJunk.RemoveAt(chosenItem);
-                    }
-                    else
-                    {
-                        chosenItem = rng.Next(itemsJunk.Count);
-                        lastItems.Add(new ItemType(itemsJunk[chosenItem]));
-                        PlaceItem(chosen, itemsJunk[chosenItem]);
-                        itemsJunk.RemoveAt(chosenItem);
-                    }
+                    chosenItem = itemsJunk.FindIndex(x => x.name == "Kingly Key Piece");
+                    lastItems.Add(new ItemType(itemsJunk[chosenItem]));
+                    PlaceItem(chosen, itemsJunk[chosenItem]);
+                    placedJunkItem = chosenItem;
+                    itemsJunk.RemoveAt(chosenItem);
+                }
+                else if (itemsJunk.Exists(x => x.name == "Kingly Key"))
+                {
+                    chosenItem = itemsJunk.FindIndex(x => x.name == "Kingly Key");
+                    lastItems.Add(new ItemType(itemsJunk[chosenItem]));
+                    PlaceItem(chosen, itemsJunk[chosenItem]);
+                    placedJunkItem = chosenItem;
+                    itemsJunk.RemoveAt(chosenItem);
                 }
                 else
                 {
-                    chosenItem = rng.Next(items.Count);
-                    lastItems.Add(new ItemType(items[chosenItem]));
-                    PlaceItem(chosen, items[chosenItem]);
-                    items.RemoveAt(chosenItem);
+                    chosenItem = Deltarando_Generator.Program.rng.Next(itemsJunk.Count);
+                    lastItems.Add(new ItemType(itemsJunk[chosenItem]));
+                    PlaceItem(chosen, itemsJunk[chosenItem]);
+                    placedJunkItem = chosenItem;
+                    itemsJunk.RemoveAt(chosenItem);
                 }
-
-                timeSinceBack++;
-                if (timeSinceBack >= 15)
-                {
-                    foreach (var item in itemsRemoved)
-                    {
-                        items.Add(new ItemType(item));
-                    }
-                    itemsRemoved.Clear();
-                    backCount = 0;
-                }
-                string locsLeft = "";
-                for (int i = 0; i < emptyLocs.Count; i++)
-                {
-                    locsLeft += emptyLocs[i].ToString() + ",";
-                }
-                string locsAvail = "";
-                for (int i = 0; i < toChooseFrom.Count; i++)
-                {
-                    locsAvail += toChooseFrom[i].ToString() + ",";
-                }
-                Console.WriteLine("Placed item.\n" + locsAvail + " locations accessible.\n" + locsLeft + " locations left.\n" + (items.Count + itemsJunk.Count + itemsRemoved.Count).ToString() + " items left.");
             }
+            else
+            {
+                chosenItem = Deltarando_Generator.Program.rng.Next(items.Count);
+                lastItems.Add(new ItemType(items[chosenItem]));
+                PlaceItem(chosen, items[chosenItem]);
+                placedItem = chosenItem;
+                items.RemoveAt(chosenItem);
+            }
+            locsOrder.Add(chosen);
+            if (timeSinceBack >= 7)
+            {
+                foreach (var item in itemsRemoved)
+                {
+                    items.Add(new ItemType(item));
+                }
+                itemsRemoved.Clear();
+                backCount = 0;
+            }
+                Console.WriteLine("Placed Item.");// + "\n" + (items.Count + itemsJunk.Count + itemsRemoved.Count).ToString() + " items left.");
         }
         return true;
     }
@@ -485,7 +479,7 @@ public class World
                 {
                     if (rooms[item].connections[i].Length == 1)
                     {
-                        var chosen = rng.Next(0, tempLocs.Count);
+                        var chosen = Deltarando_Generator.Program.rng.Next(0, tempLocs.Count);
                         tempRooms.Add(rooms.FindIndex(x => x.name == tempLocs[chosen].Remove(tempLocs[chosen].Length - 1)));
                         var loc = tempLocs[chosen];
                         var lookingInd = tempLocs[chosen][tempLocs[chosen].Length - 1].ToString();
@@ -529,17 +523,23 @@ public class World
         }
         return true;
     }
-
+    public void ShuffleStart()
+    {
+        var logic = new Logic();
+        logic.SetLogic(this);
+        AddItems();
+        AddRooms();
+    }
     public void AddRooms()
     {
         rooms.Add(new RoomType("room_castle_darkdoor", 1, new List<string>() { "room_field_starta" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Field Key")) && SpecialLogic.CanCompleteTutorial(world) }));
         rooms.Add(new RoomType("room_field_start", 2, new List<string>() { "room_field_foresta", "room_castle_darkdoorb" }));
         rooms.Add(new RoomType("room_field_forest", 2, new List<string>() { "room_field1a", "room_field_startb" }));
-        rooms.Add(new RoomType("room_field1",5, new List<string>() { "room_field2a", "room_field_forestb" , "room_field_checkers4y", "room_forest_area0y", "room_cc_1fy" }, new List<Predicate<World>>() {world => Rule.ReturnTrue(world) ,world => Rule.ReturnTrue(world), world => Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")) }));
+        rooms.Add(new RoomType("room_field1",true,5, new List<string>() { "room_field2a", "room_field_forestb" , "room_field_checkers4y", "room_forest_area0y", "room_cc_1fy" }, new List<Predicate<World>>() {world => Rule.ReturnTrue(world) ,world => Rule.ReturnTrue(world), world => Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("FieldShortcutDoor")) }));
         rooms.Add(new RoomType("room_field2",3,new List<string>() { "room_field2Aa", "room_field1b", "room_field_topchefc" }, new List<Predicate<World>>() {world => Rule.PlacedItem(world, new ItemType("Field Secret Key")), world => SpecialLogic.ReturnTrue(world), world => SpecialLogic.ReturnTrue(world)}));
         rooms.Add(new RoomType("room_field2A","room_field2b"));
         rooms.Add(new RoomType("room_field_topchef",2, new List<string>() { "room_field_puzzle1a", "room_field2d" }));
-        rooms.Add(new RoomType("room_field_puzzle1",2, new List<string>() { "room_field_mazea", "room_field_topchefb" }));
+        rooms.Add(new RoomType("room_field_puzzle1", true, 2, new List<string>() { "room_field_mazea", "room_field_topchefb" }));
         rooms.Add(new RoomType("room_field_maze",2, new List<string>() { "room_field_puzzle2a", "room_field_puzzle1b" }));
         rooms.Add(new RoomType("room_field_puzzle2",2, new List<string>() { "room_field_getsusiea", "room_field_mazeb" }));
         rooms.Add(new RoomType("room_field_getsusie",2, new List<string>() { "room_field_shop1a", "room_field_puzzle2b" }));
@@ -548,8 +548,8 @@ public class World
         rooms.Add(new RoomType("room_shop1", "room_field_shop1x"));
         rooms.Add(new RoomType("room_field3",2, new List<string>() { "room_field_boxpuzzlea", "room_field_shop1d" }));
         rooms.Add(new RoomType("room_field_boxpuzzle",2, new List<string>() { "room_field4a", "room_field3b" }));
-        rooms.Add(new RoomType("room_field4", 3, new List<string>() { "room_field_secret1a", "room_field_boxpuzzleb", "room_field_checkers4c" }, new List<Predicate<World>>() { world => SpecialLogic.ReturnTrue(world), world => SpecialLogic.ReturnTrue(world), world => Rule.PlacedItem(world, new ItemType("Board Key")) }));
-        rooms.Add(new RoomType("room_field_secret1", "room_field4b"));
+        rooms.Add(new RoomType("room_field4", true, 3, new List<string>() { "room_field_secret1a", "room_field_boxpuzzleb", "room_field_checkers4c" }, new List<Predicate<World>>() { world => SpecialLogic.ReturnTrue(world), world => SpecialLogic.ReturnTrue(world), world => Rule.PlacedItem(world, new ItemType("Board Key")) }));
+        rooms.Add(new RoomType("room_field_secret1", true, "room_field4b"));
         rooms.Add(new RoomType("room_field_checkers4",5, new List<string>() { "room_field_checkers2a", "room_field4d", "room_field1y", "room_forest_area0y", "room_cc_1fy" }, new List<Predicate<World>>() { world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.PlacedItem(world, new ItemType("BoardShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("BoardShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("BoardShortcutDoor")) }));
         rooms.Add(new RoomType("room_field_checkers2", 2, new List<string>() { "room_field_checkers6a", "room_field_checkers4b" }));
         rooms.Add(new RoomType("room_field_checkers6", 2, new List<string>() { "room_field_checkers3a", "room_field_checkers2b" }));
@@ -559,19 +559,19 @@ public class World
         rooms.Add(new RoomType("room_field_checkers7", 2, new List<string>() { "room_field_checkersbossa", "room_field_checkers5b" }));
         rooms.Add(new RoomType("room_field_checkersboss", 2, new List<string>() { "room_forest_savepoint1a", "room_field_checkers7b" }, new List<Predicate<World>>() { world => SpecialLogic.ActAvailability(world) && Rule.PlacedItem(world, new ItemType("SPARE")), world => SpecialLogic.ActAvailability(world) && Rule.PlacedItem(world, new ItemType("SPARE")) }));
         rooms.Add(new RoomType("room_forest_savepoint1", 2, new List<string>() { "room_forest_area0a", "room_field_checkersbossb" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Forest Key")), world => SpecialLogic.ReturnTrue(world)}));
-        rooms.Add(new RoomType("room_forest_area0", 5, new List<string>() { "room_forest_area1a", "room_forest_savepoint1b", "room_field1y", "room_field_checkers4y", "room_cc_1fy" }, new List<Predicate<World>>() { world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.PlacedItem(world, new ItemType("ForestShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("ForestShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("ForestShortcutDoor")) }));
-        rooms.Add(new RoomType("room_forest_area1", 2, new List<string>() { "room_forest_area2a", "room_forest_area0b" }));
+        rooms.Add(new RoomType("room_forest_area0", true, 5, new List<string>() { "room_forest_area1a", "room_forest_savepoint1b", "room_field1y", "room_field_checkers4y", "room_cc_1fy" }, new List<Predicate<World>>() { world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.PlacedItem(world, new ItemType("ForestShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("ForestShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("ForestShortcutDoor")) }));
+        rooms.Add(new RoomType("room_forest_area1", true, 2, new List<string>() { "room_forest_area2a", "room_forest_area0b" }));
         rooms.Add(new RoomType("room_forest_area2", 3, new List<string>() { "room_forest_area2Aa", "room_forest_area1b", "room_forest_puzzle1c" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Forest Secret Key")), world => SpecialLogic.ReturnTrue(world), world => SpecialLogic.ReturnTrue(world) }));
         rooms.Add(new RoomType("room_forest_area2A", "room_forest_area2b"));
         rooms.Add(new RoomType("room_forest_puzzle1", 2, new List<string>() { "room_forest_beforeclovera", "room_forest_area2d" }));
-        rooms.Add(new RoomType("room_forest_beforeclover", 3, new List<string>() { "room_forest_area3Aa", "room_forest_puzzle1b", "room_forest_area3c" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Forest Secret Key")), world => SpecialLogic.ReturnTrue(world), world => SpecialLogic.ReturnTrue(world) }));
+        rooms.Add(new RoomType("room_forest_beforeclover", true, 3, new List<string>() { "room_forest_area3Aa", "room_forest_puzzle1b", "room_forest_area3c" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Forest Secret Key")), world => SpecialLogic.ReturnTrue(world), world => SpecialLogic.ReturnTrue(world) }));
         rooms.Add(new RoomType("room_forest_area3A", "room_forest_beforecloverb"));
         rooms.Add(new RoomType("room_forest_area3",2, new List<string>() { "room_forest_savepoint2a", "room_forest_beforecloverd" }));
         rooms.Add(new RoomType("room_forest_savepoint2", 3, new List<string>() { "room_forest_smitha", "room_forest_area3b", "room_forest_area4c" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Forest Secret Key")), world => SpecialLogic.ReturnTrue(world), world => SpecialLogic.ReturnTrue(world) }));
         rooms.Add(new RoomType("room_forest_smith", "room_forest_savepoint2b"));
-        rooms.Add(new RoomType("room_forest_area4", 2, new List<string>() { "room_forest_dancers1a", "room_forest_savepoint2d" }));
+        rooms.Add(new RoomType("room_forest_area4", true, 2, new List<string>() { "room_forest_dancers1a", "room_forest_savepoint2d" }));
         rooms.Add(new RoomType("room_forest_dancers1", 4, new List<string>() { "room_forest_secret1a", "room_forest_area4b", "room_forest_thrashmakerc", "room_forest_secret1x" }, new List<Predicate<World>>() {world => SpecialLogic.ReturnTrue(world), world => SpecialLogic.ReturnTrue(world), world => SpecialLogic.ReturnTrue(world), world => false }));
-        rooms.Add(new RoomType("room_forest_secret1", 2, new List<string>() { "room_forest_dancers1b", "room_forest_dancers1x" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Forest Secret Key")), world => SpecialLogic.ReturnTrue(world)}));
+        rooms.Add(new RoomType("room_forest_secret1", true, 2, new List<string>() { "room_forest_dancers1b", "room_forest_dancers1x" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Forest Secret Key")), world => SpecialLogic.ReturnTrue(world)}));
         rooms.Add(new RoomType("room_forest_thrashmaker", 2, new List<string>() { "room_forest_starwalkera", "room_forest_dancers1d" }));
         rooms.Add(new RoomType("room_forest_starwalker", 2, new List<string>() { "room_forest_area5a", "room_forest_thrashmakerb" }));
         rooms.Add(new RoomType("room_forest_area5", 2, new List<string>() { "room_forest_savepoint_relaxa", "room_forest_starwalkerb" }));
@@ -587,11 +587,11 @@ public class World
         rooms.Add(new RoomType("room_cc_prison_prejoker", 2, new List<string>() { "room_cc_jokera", "room_cc_prisonelevatorx" }, new List<Predicate<World>>() { world => Rule.PlacedItem(world, new ItemType("Door Key")), world => SpecialLogic.ReturnTrue(world) }));
         rooms.Add(new RoomType("room_cc_joker", "room_cc_prison_prejokerb"));
         rooms.Add(new RoomType("room_cc_entrance", 2, new List<string>() { "room_cc_1fa", "room_forest_fightsusiex" }));
-        rooms.Add(new RoomType("room_cc_1f", 8, new List<string>() { "room_cc_rudinna", "room_cc_entranceb", "room_cc_2fc", "room_cc_prisonelevatorx", "room_cc_elevatorw", "room_field1y", "room_field_checkers4y", "room_forest_area0y" }, new List<Predicate<World>>() { world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.PlacedItem(world, new ItemType("CastleShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("CastleShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("CastleShortcutDoor")) }));
+        rooms.Add(new RoomType("room_cc_1f", true, 8, new List<string>() { "room_cc_rudinna", "room_cc_entranceb", "room_cc_2fc", "room_cc_prisonelevatorx", "room_cc_elevatorw", "room_field1y", "room_field_checkers4y", "room_forest_area0y" }, new List<Predicate<World>>() { world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.ReturnTrue(world), world => Rule.PlacedItem(world, new ItemType("CastleShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("CastleShortcutDoor")), world => Rule.PlacedItem(world, new ItemType("CastleShortcutDoor")) }));
         rooms.Add(new RoomType("room_cc_rudinn", "room_cc_1fb"));
         rooms.Add(new RoomType("room_cc_2f", 3, new List<string>() { "room_cc_rurus1a", "room_cc_3fc", "room_cc_1fd" }));
         rooms.Add(new RoomType("room_cc_rurus1", "room_cc_2fb"));
-        rooms.Add(new RoomType("room_cc_3f", 3, new List<string>() { "room_cc_hathya", "room_cc_4fc", "room_cc_2fd" }));
+        rooms.Add(new RoomType("room_cc_3f", true, 3, new List<string>() { "room_cc_hathya", "room_cc_4fc", "room_cc_2fd" }));
         rooms.Add(new RoomType("room_cc_hathy", "room_cc_3fb"));
         rooms.Add(new RoomType("room_cc_4f", 4, new List<string>() { "room_cc_rurus2a", "room_cc_cloverc", "room_cc_3fd", "room_cc_5fe" }));
         rooms.Add(new RoomType("room_cc_rurus2", "room_cc_4fb"));
@@ -605,6 +605,13 @@ public class World
         while (rooms.Count <= 200)
         {
             rooms.Add(new RoomType("", ""));
+        }
+        for (int i = 0; i < rooms.Count; i++)
+        {
+            if (rooms[i].hasEnemies)
+            {
+                enemyRooms.Add(i);
+            }
         }
     }
 
@@ -724,9 +731,9 @@ public class World
         {
             for (int i = 0; i < 19; i++)
             {
-                locations[41 + i] = new ItemType("krislvl");
-                locations[60 + i] = new ItemType("susielvl");
-                locations[79 + i] = new ItemType("ralseilvl");
+                PlaceForcedItem(41 + i, new ItemType("krislvl"));
+                PlaceForcedItem(60 + i, new ItemType("susielvl"));
+                PlaceForcedItem(79 + i, new ItemType("ralseilvl"));
             }
         }
         if (options[13] == 1)
@@ -874,12 +881,10 @@ public class World
         {
             itemsJunk.Add(new ItemType("Spookysword"));
             itemsJunk.Add(new ItemType("Brave Ax"));
-            itemsJunk.Add(new ItemType("Devilsknife"));
             itemsJunk.Add(new ItemType("Ragger"));
             itemsJunk.Add(new ItemType("DaintyScarf"));
             weaponKNames.Add("Spookysword");
             weaponSNames.Add("Brave Ax");
-            weaponSNames.Add("Devilsknife");
             weaponRNames.Add("Ragger");
             weaponRNames.Add("DaintyScarf");
             if (options[24] == 1)
@@ -911,7 +916,6 @@ public class World
         else
         {
             PlaceForcedItem(16, new ItemType("Ragger"));
-            PlaceForcedItem(20, new ItemType("Devilsknife"));
             PlaceForcedItem(28, new ItemType("Spookysword"));
             PlaceForcedItem(30, new ItemType("Brave Ax"));
             PlaceForcedItem(31, new ItemType("DaintyScarf"));
@@ -1000,15 +1004,11 @@ public class World
             }
             itemsJunk.Add(new ItemType("White Ribbon"));
             itemsJunk.Add(new ItemType("IronShackle"));
-            itemsJunk.Add(new ItemType("Jevilstail"));
             armorKNames.Add("White Ribbon");
             armorRNames.Add("White Ribbon");
             armorKNames.Add("IronShackle");
             armorSNames.Add("IronShackle");
             armorRNames.Add("IronShackle");
-            armorKNames.Add("Jevilstail");
-            armorSNames.Add("Jevilstail");
-            armorRNames.Add("Jevilstail");
         }
         else
         {
@@ -1016,8 +1016,21 @@ public class World
             PlaceForcedItem(32, new ItemType("Amber Card"));
             PlaceForcedItem(17, new ItemType("Dice Brace"));
             PlaceForcedItem(23, new ItemType("White Ribbon"));
-            PlaceForcedItem(24, new ItemType("Jevilstail"));
             PlaceForcedItem(35, new ItemType("IronShackle"));
+        }
+        if (options[71] == 0)
+        {
+            itemsJunk.Add(new ItemType("Devilsknife"));
+            itemsJunk.Add(new ItemType("Jevilstail"));
+            weaponSNames.Add("Devilsknife");
+            armorKNames.Add("Jevilstail");
+            armorSNames.Add("Jevilstail");
+            armorRNames.Add("Jevilstail");
+        }
+        else
+        {
+            PlaceForcedItem(20, new ItemType("Devilsknife"));
+            PlaceForcedItem(24, new ItemType("Jevilstail"));
         }
         if (options[3] == 1)
         {
@@ -1160,13 +1173,13 @@ public class World
         file.Close();
         for (int i = 0; i < 19; i++)
         {
-            if (!items.Exists(x => x.name == "susie") && !itemsJunk.Exists(x => x.name == "susie"))
+            if (!wantedLocs.Exists(x => x.name == "Susie") && !items.Exists(x => x.name == "Susie") && !itemsJunk.Exists(x => x.name == "Susie"))
             {
                 locations[60 + i] = new ItemType("susielvl");
                 items.RemoveAll(x => x.name == "susielvl");
                 itemsJunk.RemoveAll(x => x.name == "susielvl");
             }
-            if (!items.Exists(x => x.name == "ralsei") && !itemsJunk.Exists(x => x.name == "ralsei"))
+            if (!wantedLocs.Exists(x => x.name == "Ralsei") && !items.Exists(x => x.name == "Ralsei") && !itemsJunk.Exists(x => x.name == "Ralsei"))
             {
                 locations[79 + i] = new ItemType("ralseilvl");
                 items.RemoveAll(x => x.name == "ralseilvl");
@@ -1199,7 +1212,7 @@ public class World
             }
         }
         file.Close();
-        while (locations.FindAll(x => x.name == "Null").Count > items.Count + itemsJunk.Count - options[1] - (wantedLocs.Count - wantedLocs.FindAll(x => x.name == "").Count))
+        while (locations.FindAll(x => x.name == "Null").Count > items.Count + itemsJunk.Count - options[1] + wantedLocs.FindAll(x => x.name != "").Count)
         {
             itemsJunk.Add(new ItemType("gold"));
         }
@@ -1292,26 +1305,17 @@ public static class SpecialLogic
     {
         return ((Rule.PlacedItem(world, new ItemType("LEFT SOUL")) || Rule.PlacedItem(world, new ItemType("RIGHT SOUL"))) && (Rule.PlacedItem(world, new ItemType("DOWN SOUL")) || Rule.PlacedItem(world, new ItemType("UP SOUL"))) && (Rule.PlacedItem(world, new ItemType("DEFEND")) || Rule.PlacedItem(world, new ItemType("FIGHT"))));
     }
-    public static bool UnlockedAreaCount(World world, int amountToUnlock)
+    public static bool CanLevelUp(World world, int strength)
     {
-        int unlocked = 0;
-        if (Rule.PlacedItem(world, new ItemType("Field Key")) && SpecialLogic.CanCompleteTutorial(world))
+        int amountFound = 0;
+        foreach (var item in world.enemyRooms)
         {
-            unlocked++;
+            if (SpecialLogic.CanReachRoom(world, world.rooms[item].name))
+            {
+                amountFound++;
+            }
         }
-        if (Rule.PlacedItem(world, new ItemType("Board Key")) && SpecialLogic.CanCompleteTutorial(world))
-        {
-            unlocked++;
-        }
-        if (Rule.PlacedItem(world, new ItemType("Forest Key")) && SpecialLogic.CanCompleteTutorial(world))
-        {
-            unlocked++;
-        }
-        if (Rule.PlacedItem(world, new ItemType("Castle Key")) && SpecialLogic.CanCompleteTutorial(world))
-        {
-            unlocked++;
-        }
-        return (unlocked >= amountToUnlock);
+        return amountFound > strength*2;
     }
 }
 
@@ -1336,11 +1340,11 @@ public class Logic
         inWorld.rules[16] = (world) => SpecialLogic.CanReachRoom(world, "room_forest_area2A");
         inWorld.rules[17] = (world) => SpecialLogic.CanReachRoom(world, "room_forest_area3A");
         inWorld.rules[18] = (world) => SpecialLogic.CanReachRoom(world, "room_forest_area4");
-        inWorld.rules[20] = (world) => SpecialLogic.CanReachRoom(world, "room_cc_joker") && SpecialLogic.CanReachRoom(world, "room_cc_prison_prejoker");
+        inWorld.rules[20] = (world) => Rule.PlacedItem(world, new ItemType("LEFT SOUL")) && Rule.PlacedItem(world, new ItemType("RIGHT SOUL")) && Rule.PlacedItem(world, new ItemType("DOWN SOUL")) && Rule.PlacedItem(world, new ItemType("UP SOUL")) && SpecialLogic.CanReachRoom(world, "room_cc_joker") && SpecialLogic.CanReachRoom(world, "room_cc_prison_prejoker");
         inWorld.rules[21] = (world) => SpecialLogic.CanReachRoom(world, "room_cc_2f");
         inWorld.rules[22] = (world) => SpecialLogic.CanReachRoom(world, "room_cc_4f");
         inWorld.rules[23] = (world) => Rule.PlacedItem(world, new ItemType("Field Secret Key")) && SpecialLogic.CanReachRoom(world, "room_field_maze");
-        inWorld.rules[24] = (world) => SpecialLogic.CanReachRoom(world, "room_cc_joker") && SpecialLogic.CanReachRoom(world, "room_cc_prison_prejoker");
+        inWorld.rules[24] = (world) => Rule.PlacedItem(world, new ItemType("LEFT SOUL")) && Rule.PlacedItem(world, new ItemType("RIGHT SOUL")) && Rule.PlacedItem(world, new ItemType("DOWN SOUL")) && Rule.PlacedItem(world, new ItemType("UP SOUL")) && SpecialLogic.CanReachRoom(world, "room_cc_joker") && SpecialLogic.CanReachRoom(world, "room_cc_prison_prejoker");
         inWorld.rules[25] = (world) => SpecialLogic.CanReachRoom(world, "room_shop1");
         inWorld.rules[26] = (world) => SpecialLogic.CanReachRoom(world, "room_shop1");
         inWorld.rules[27] = (world) => SpecialLogic.CanReachRoom(world, "room_shop1");
@@ -1358,62 +1362,62 @@ public class Logic
         inWorld.rules[39] = (world) => SpecialLogic.CanReachRoom(world, "room_forest_savepoint3");
         inWorld.rules[40] = (world) => SpecialLogic.CanReachRoom(world, "room_shop1") && SpecialLogic.CanReachRoom(world, "room_cc_prison_prejoker");
         inWorld.rules[41] = (world) => Rule.PlacedItem(world, new ItemType("FIGHT")) || Rule.PlacedItem(world, new ItemType("DEFEND")) || Rule.PlacedItem(world, new ItemType("SPARE"));
-        inWorld.rules[42] = (world) => SpecialLogic.UnlockedAreaCount(world, 1);
-        inWorld.rules[43] = (world) => SpecialLogic.UnlockedAreaCount(world, 1);
-        inWorld.rules[44] = (world) => SpecialLogic.UnlockedAreaCount(world, 1);
-        inWorld.rules[45] = (world) => SpecialLogic.UnlockedAreaCount(world, 2);
-        inWorld.rules[46] = (world) => SpecialLogic.UnlockedAreaCount(world, 2);
-        inWorld.rules[47] = (world) => SpecialLogic.UnlockedAreaCount(world, 2);
-        inWorld.rules[48] = (world) => SpecialLogic.UnlockedAreaCount(world, 2);
-        inWorld.rules[49] = (world) => SpecialLogic.UnlockedAreaCount(world, 2);
-        inWorld.rules[50] = (world) => SpecialLogic.UnlockedAreaCount(world, 3);
-        inWorld.rules[51] = (world) => SpecialLogic.UnlockedAreaCount(world, 3);
-        inWorld.rules[52] = (world) => SpecialLogic.UnlockedAreaCount(world, 3);
-        inWorld.rules[53] = (world) => SpecialLogic.UnlockedAreaCount(world, 3);
-        inWorld.rules[54] = (world) => SpecialLogic.UnlockedAreaCount(world, 3);
-        inWorld.rules[55] = (world) => SpecialLogic.UnlockedAreaCount(world, 4);
-        inWorld.rules[56] = (world) => SpecialLogic.UnlockedAreaCount(world, 4);
-        inWorld.rules[57] = (world) => SpecialLogic.UnlockedAreaCount(world, 4);
-        inWorld.rules[58] = (world) => SpecialLogic.UnlockedAreaCount(world, 4);
-        inWorld.rules[59] = (world) => SpecialLogic.UnlockedAreaCount(world, 4);
-        inWorld.rules[60] = (world) => SpecialLogic.UnlockedAreaCount(world, 1) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[61] = (world) => SpecialLogic.UnlockedAreaCount(world, 1) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[62] = (world) => SpecialLogic.UnlockedAreaCount(world, 1) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[63] = (world) => SpecialLogic.UnlockedAreaCount(world, 1) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[64] = (world) => SpecialLogic.UnlockedAreaCount(world, 2) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[65] = (world) => SpecialLogic.UnlockedAreaCount(world, 2) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[66] = (world) => SpecialLogic.UnlockedAreaCount(world, 2) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[67] = (world) => SpecialLogic.UnlockedAreaCount(world, 2) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[68] = (world) => SpecialLogic.UnlockedAreaCount(world, 2) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[69] = (world) => SpecialLogic.UnlockedAreaCount(world, 3) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[70] = (world) => SpecialLogic.UnlockedAreaCount(world, 3) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[71] = (world) => SpecialLogic.UnlockedAreaCount(world, 3) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[72] = (world) => SpecialLogic.UnlockedAreaCount(world, 3) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[73] = (world) => SpecialLogic.UnlockedAreaCount(world, 3) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[74] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[75] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[76] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[77] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[78] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Susie"));
-        inWorld.rules[79] = (world) => SpecialLogic.UnlockedAreaCount(world, 1) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[80] = (world) => SpecialLogic.UnlockedAreaCount(world, 1) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[81] = (world) => SpecialLogic.UnlockedAreaCount(world, 1) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[82] = (world) => SpecialLogic.UnlockedAreaCount(world, 1) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[83] = (world) => SpecialLogic.UnlockedAreaCount(world, 2) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[84] = (world) => SpecialLogic.UnlockedAreaCount(world, 2) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[85] = (world) => SpecialLogic.UnlockedAreaCount(world, 2) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[86] = (world) => SpecialLogic.UnlockedAreaCount(world, 2) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[87] = (world) => SpecialLogic.UnlockedAreaCount(world, 2) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[88] = (world) => SpecialLogic.UnlockedAreaCount(world, 3) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[89] = (world) => SpecialLogic.UnlockedAreaCount(world, 3) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[90] = (world) => SpecialLogic.UnlockedAreaCount(world, 3) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[91] = (world) => SpecialLogic.UnlockedAreaCount(world, 3) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[92] = (world) => SpecialLogic.UnlockedAreaCount(world, 3) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[93] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[94] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[95] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[96] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Ralsei"));
-        inWorld.rules[97] = (world) => SpecialLogic.UnlockedAreaCount(world, 4) && Rule.PlacedItem(world, new ItemType("Ralsei"));
+        inWorld.rules[42] = (world) => SpecialLogic.CanLevelUp(world, 0);
+        inWorld.rules[43] = (world) => SpecialLogic.CanLevelUp(world, 0);
+        inWorld.rules[44] = (world) => SpecialLogic.CanLevelUp(world, 0);
+        inWorld.rules[45] = (world) => SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[46] = (world) => SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[47] = (world) => SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[48] = (world) => SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[49] = (world) => SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[50] = (world) => SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[51] = (world) => SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[52] = (world) => SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[53] = (world) => SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[54] = (world) => SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[55] = (world) => SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[56] = (world) => SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[57] = (world) => SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[58] = (world) => SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[59] = (world) => SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[60] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 0);
+        inWorld.rules[61] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 0);
+        inWorld.rules[62] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 0);
+        inWorld.rules[63] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 0);
+        inWorld.rules[64] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[65] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[66] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[67] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[68] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[69] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[70] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[71] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[72] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[73] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[74] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[75] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[76] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[77] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[78] = (world) => Rule.PlacedItem(world, new ItemType("Susie")) && SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[79] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 0);
+        inWorld.rules[80] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 0);
+        inWorld.rules[81] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 0);
+        inWorld.rules[82] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 0);
+        inWorld.rules[83] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[84] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[85] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[86] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[87] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 1);
+        inWorld.rules[88] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[89] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[90] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[91] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[92] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 2);
+        inWorld.rules[93] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[94] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[95] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[96] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 3);
+        inWorld.rules[97] = (world) => Rule.PlacedItem(world, new ItemType("Ralsei")) && SpecialLogic.CanLevelUp(world, 3);
         inWorld.rules[98] = (world) => SpecialLogic.CanReachRoom(world, "room_cc_preroof");
         inWorld.rules[99] = (world) => SpecialLogic.CanReachRoom(world, "room_field_checkers4");
         inWorld.rules[100] = (world) => SpecialLogic.CanReachRoom(world, "room_forest_area0");

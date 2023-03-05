@@ -1,0 +1,7 @@
+(-1) Player Name=YourName
+(8) Randomize Keys=False
+(7) Randomize Items=False
+(5) Randomize Weapons=True
+(6) Randomize Armors=True
+(71) Vanilla Spamton Neo=False
+(55) Generate Spoiler=True

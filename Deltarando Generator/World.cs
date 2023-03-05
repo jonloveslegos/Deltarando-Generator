@@ -144,6 +144,7 @@ public class World
     public List<int> locsOrder = new List<int>();
     public List<ItemType> itemsRemoved = new List<ItemType>();
     public string myName = "DEFAULT";
+    public int myChapter = 1;
     public string myFile = "options.txt";
     public string myId = "000";
     List<List<ItemType>> lastLocations = new List<List<ItemType>>();
@@ -169,25 +170,28 @@ public class World
         {
             locations.Add(new ItemType(""));
         }
-        for (int i = 0; i < 9; i++)
+        if (myChapter == 1)
         {
-            equipment.Add(new ItemType(""));
-        }
-        for (int i = 110; i <= 140; i++)
-        {
-            locations[i] = new ItemType("Null");
-        }
-        for (int i = 20; i <= 103; i++)
-        {
-            locations[i] = new ItemType("Null");
-        }
-        for (int i = 5; i <= 18; i++)
-        {
-            locations[i] = new ItemType("Null");
-        }
-        for (int i = 0; i <= 3; i++)
-        {
-            locations[i] = new ItemType("Null");
+            for (int i = 0; i < 9; i++)
+            {
+                equipment.Add(new ItemType(""));
+            }
+            for (int i = 110; i <= 140; i++)
+            {
+                locations[i] = new ItemType("Null");
+            }
+            for (int i = 20; i <= 103; i++)
+            {
+                locations[i] = new ItemType("Null");
+            }
+            for (int i = 5; i <= 18; i++)
+            {
+                locations[i] = new ItemType("Null");
+            }
+            for (int i = 0; i <= 3; i++)
+            {
+                locations[i] = new ItemType("Null");
+            }
         }
         for (int i = 0; i <= 300; i++)
         {
@@ -216,6 +220,10 @@ public class World
                 if (int.Parse(itm.Split('(', ')')[1]) == -1)
                 {
                     myName = itm.Split('=')[1];
+                }
+                else if (int.Parse(itm.Split('(', ')')[1]) == -2)
+                {
+                    myChapter = int.Parse(itm.Split('=')[1]);
                 }
                 else if (itm.Split('=')[1].ToLower() != "true" && itm.Split('=')[1].ToLower() != "false")
                 {
@@ -610,544 +618,547 @@ public class World
 
     public void AddItems()
     {
-        if (options[8] == 1)
+        StreamReader file;
+        if (myChapter == 1)
         {
-            items.Add(new ItemType("BrokenCake"));
-            items.Add(new ItemType("Broken Key A"));
-            items.Add(new ItemType("Door Key"));
-            items.Add(new ItemType("Broken Key B"));
-            items.Add(new ItemType("Broken Key C"));
-            items.Add(new ItemType("Field Key"));
-            items.Add(new ItemType("Board Key"));
-            items.Add(new ItemType("Forest Key"));
-            items.Add(new ItemType("Castle Key"));
-            items.Add(new ItemType("Field Secret Key"));
-            items.Add(new ItemType("Forest Secret Key"));
-            if (options[25] == 1)
+            if (options[8] == 1)
             {
-                for (int i = 0; i < 10; i++)
+                items.Add(new ItemType("BrokenCake"));
+                items.Add(new ItemType("Broken Key A"));
+                items.Add(new ItemType("Door Key"));
+                items.Add(new ItemType("Broken Key B"));
+                items.Add(new ItemType("Broken Key C"));
+                items.Add(new ItemType("Field Key"));
+                items.Add(new ItemType("Board Key"));
+                items.Add(new ItemType("Forest Key"));
+                items.Add(new ItemType("Castle Key"));
+                items.Add(new ItemType("Field Secret Key"));
+                items.Add(new ItemType("Forest Secret Key"));
+                if (options[25] == 1)
                 {
-                    itemsJunk.Add(new ItemType("Kingly Key Piece"));
+                    for (int i = 0; i < 10; i++)
+                    {
+                        itemsJunk.Add(new ItemType("Kingly Key Piece"));
+                    }
+                }
+                else
+                {
+                    itemsJunk.Add(new ItemType("Kingly Key"));
                 }
             }
             else
             {
-                itemsJunk.Add(new ItemType("Kingly Key"));
+                PlaceForcedItem(34, new ItemType("BrokenCake"));
+                PlaceForcedItem(40, new ItemType("Broken Key A"));
+                PlaceForcedItem(33, new ItemType("Door Key"));
+                PlaceForcedItem(15, new ItemType("Broken Key B"));
+                PlaceForcedItem(13, new ItemType("Broken Key C"));
+                PlaceForcedItem(36, new ItemType("Field Key"));
+                PlaceForcedItem(37, new ItemType("Board Key"));
+                PlaceForcedItem(38, new ItemType("Forest Key"));
+                PlaceForcedItem(39, new ItemType("Castle Key"));
+                PlaceForcedItem(98, new ItemType("Kingly Key"));
+                PlaceForcedItem(102, new ItemType("Field Secret Key"));
+                PlaceForcedItem(103, new ItemType("Forest Secret Key"));
             }
-        }
-        else
-        {
-            PlaceForcedItem(34, new ItemType("BrokenCake"));
-            PlaceForcedItem(40, new ItemType("Broken Key A"));
-            PlaceForcedItem(33, new ItemType("Door Key"));
-            PlaceForcedItem(15, new ItemType("Broken Key B"));
-            PlaceForcedItem(13, new ItemType("Broken Key C"));
-            PlaceForcedItem(36, new ItemType("Field Key"));
-            PlaceForcedItem(37, new ItemType("Board Key"));
-            PlaceForcedItem(38, new ItemType("Forest Key"));
-            PlaceForcedItem(39, new ItemType("Castle Key"));
-            PlaceForcedItem(98, new ItemType("Kingly Key"));
-            PlaceForcedItem(102, new ItemType("Field Secret Key"));
-            PlaceForcedItem(103, new ItemType("Forest Secret Key"));
-        }
-        if (options[7] == 1)
-        {
-            if (options[24] == 1)
+            if (options[7] == 1)
             {
+                if (options[24] == 1)
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        itemsJunk.Add(new ItemType("CinnaPill"));
+                        itemsJunk.Add(new ItemType("CD Bagel"));
+                        itemsJunk.Add(new ItemType("DD-Burger"));
+                        itemsJunk.Add(new ItemType("SpagettiCode"));
+                    }
+                    itemsJunk.Add(new ItemType("LightCandy"));
+                    itemsJunk.Add(new ItemType("TensionBit"));
+                    itemsJunk.Add(new ItemType("TensionGem"));
+                }
                 for (int i = 0; i < 4; i++)
                 {
-                    itemsJunk.Add(new ItemType("CinnaPill"));
-                    itemsJunk.Add(new ItemType("CD Bagel"));
-                    itemsJunk.Add(new ItemType("DD-Burger"));
-                    itemsJunk.Add(new ItemType("SpagettiCode"));
+                    itemsJunk.Add(new ItemType("Darkburger"));
+                    itemsJunk.Add(new ItemType("HeartsDonut"));
+                    itemsJunk.Add(new ItemType("ChocDiamond"));
+                    itemsJunk.Add(new ItemType("RouxlsRoux"));
                 }
-                itemsJunk.Add(new ItemType("LightCandy"));
-                itemsJunk.Add(new ItemType("TensionBit"));
-                itemsJunk.Add(new ItemType("TensionGem"));
-            }
-            for (int i = 0; i < 4; i++)
-            {
-                itemsJunk.Add(new ItemType("Darkburger"));
-                itemsJunk.Add(new ItemType("HeartsDonut"));
-                itemsJunk.Add(new ItemType("ChocDiamond"));
-                itemsJunk.Add(new ItemType("RouxlsRoux"));
-            }
-            itemsJunk.Add(new ItemType("Glowshard"));
-            items.Add(new ItemType("Top Cake"));
-            itemsJunk.Add(new ItemType("LancerCookie"));
-            for (int i = 0; i < 3; i++)
-            {
-                itemsJunk.Add(new ItemType("Spincake"));
-                itemsJunk.Add(new ItemType("ClubsSandwich"));
-            }
-            for (int i = 0; i < 8; i++)
-            {
-                itemsJunk.Add(new ItemType("Dark Candy"));
-            }
-            for (int i = 0; i < 2; i++)
-            {
-                itemsJunk.Add(new ItemType("ReviveMint"));
-                items.Add(new ItemType("Manual"));
-            }
-        }
-        else
-        {
-            PlaceForcedItem(0, new ItemType("Dark Candy"));
-            PlaceForcedItem(1, new ItemType("Dark Candy"));
-            PlaceForcedItem(2, new ItemType("Dark Candy"));
-            PlaceForcedItem(3, new ItemType("Dark Candy"));
-            PlaceForcedItem(5, new ItemType("Top Cake"));
-            PlaceForcedItem(6, new ItemType("ChocDiamond"));
-            PlaceForcedItem(7, new ItemType("HeartsDonut"));
-            PlaceForcedItem(8, new ItemType("LancerCookie"));
-            PlaceForcedItem(9, new ItemType("Spincake"));
-            PlaceForcedItem(10, new ItemType("Glowshard"));
-            PlaceForcedItem(11, new ItemType("Manual"));
-            PlaceForcedItem(12, new ItemType("Manual"));
-            PlaceForcedItem(14, new ItemType("ReviveMint"));
-            PlaceForcedItem(21, new ItemType("ClubsSandwich"));
-            PlaceForcedItem(22, new ItemType("ReviveMint"));
-            PlaceForcedItem(25, new ItemType("Dark Candy"));
-            PlaceForcedItem(26, new ItemType("Darkburger"));
-            PlaceForcedItem(29, new ItemType("RouxlsRoux"));
-        }
-        if (options[4] == 1)
-        {
-            for (int i = 0; i < 19; i++)
-            {
-                itemsJunk.Add(new ItemType("krislvl"));
-                itemsJunk.Add(new ItemType("susielvl"));
-                itemsJunk.Add(new ItemType("ralseilvl"));
-            }
-        }
-        else
-        {
-            for (int i = 0; i < 19; i++)
-            {
-                PlaceForcedItem(41 + i, new ItemType("krislvl"));
-                PlaceForcedItem(60 + i, new ItemType("susielvl"));
-                PlaceForcedItem(79 + i, new ItemType("ralseilvl"));
-            }
-        }
-        if (options[13] == 1)
-        {
-            items.Add(new ItemType("Susie"));
-            items.Add(new ItemType("Ralsei"));
-            items.Add(new ItemType("Control Susie"));
-        }
-        else
-        {
-            PlaceForcedItem(111, new ItemType("Ralsei"));
-            PlaceForcedItem(110, new ItemType("Susie"));
-            PlaceForcedItem(112, new ItemType("Control Susie"));
-        }
-        if (options[11] == 1)
-        {
-            items.Add(new ItemType("FIGHT"));
-            items.Add(new ItemType("MAGIC"));
-            items.Add(new ItemType("ITEM"));
-            items.Add(new ItemType("SPARE"));
-            items.Add(new ItemType("DEFEND"));
-        }
-        else
-        {
-            starting.Add(new ItemType("FIGHT"));
-            starting.Add(new ItemType("MAGIC"));
-            starting.Add(new ItemType("ITEM"));
-            starting.Add(new ItemType("SPARE"));
-            starting.Add(new ItemType("DEFEND"));
-        }
-        if (options[23] == 1)
-        {
-            items.Add(new ItemType("C MENU"));
-        }
-        else
-        {
-            starting.Add(new ItemType("C MENU"));
-        }
-        if (options[22] == 1)
-        {
-            items.Add(new ItemType("RUN"));
-        }
-        else
-        {
-            starting.Add(new ItemType("RUN"));
-        }
-        if (options[21] == 1)
-        {
-            items.Add(new ItemType("TP BAR"));
-        }
-        else
-        {
-            starting.Add(new ItemType("TP BAR"));
-        }
-        if (options[17] == 1)
-        {
-            items.Add(new ItemType("LEFT SOUL"));
-            items.Add(new ItemType("RIGHT SOUL"));
-            items.Add(new ItemType("UP SOUL"));
-            items.Add(new ItemType("DOWN SOUL"));
-        }
-        else
-        {
-            starting.Add(new ItemType("LEFT SOUL"));
-            starting.Add(new ItemType("RIGHT SOUL"));
-            starting.Add(new ItemType("UP SOUL"));
-            starting.Add(new ItemType("DOWN SOUL"));
-        }
-        if (options[18] == 1)
-        {
-            items.Add(new ItemType("SAVE HEAL"));
-        }
-        else
-        {
-            starting.Add(new ItemType("SAVE HEAL"));
-        }
-        if (options[19] == 1)
-        {
-            items.Add(new ItemType("SAVING"));
-        }
-        else
-        {
-            starting.Add(new ItemType("SAVING"));
-        }
-        if (options[77] == 1)
-        {
-            for (int i = 123; i <= 125; i++)
-            {
-                itemsJunk.Add(new ItemType("Save"));
-            }
-        }
-        else
-        {
-            for (int i = 123; i <= 125; i++)
-            {
-                PlaceForcedItem(i, new ItemType("Save"));
-            }
-        }
-        if (options[20] == 1)
-        {
-            for (int i = 0; i < 14; i++)
-            {
-                itemsJunk.Add(new ItemType("Save"));
-            }
-        }
-        else
-        {
-
-            for (int i = 126; i <= 139; i++)
-            {
-                PlaceForcedItem(i, new ItemType("Save"));
-            }
-        }
-        if (options[10] == 1)
-        {
-            items.Add(new ItemType("kACT"));
-            itemsJunk.Add(new ItemType("rHeal Prayer"));
-            itemsJunk.Add(new ItemType("rPacify"));
-            itemsJunk.Add(new ItemType("sRude Buster"));
-            if (options[24] == 1)
-            {
-                items.Add(new ItemType("sACT"));
-                items.Add(new ItemType("rACT"));
-                itemsJunk.Add(new ItemType("sLife Steal"));
-                itemsJunk.Add(new ItemType("kRed Sword"));
-                itemsJunk.Add(new ItemType("kFocus Blade"));
-                itemsJunk.Add(new ItemType("kX-Slash"));
-                itemsJunk.Add(new ItemType("rMulti-Heal"));
-                itemsJunk.Add(new ItemType("rPoison"));
-                itemsJunk.Add(new ItemType("sHorrid Buster"));
-                itemsJunk.Add(new ItemType("sHealing Magic"));
-                itemsJunk.Add(new ItemType("rLife Transfer"));
-                itemsJunk.Add(new ItemType("sDefense Trade"));
-                itemsJunk.Add(new ItemType("rDark Sleep"));
-            }
-        }
-        else
-        {
-            starting.Add(new ItemType("kACT"));
-            starting.Add(new ItemType("rHeal Prayer"));
-            starting.Add(new ItemType("rPacify"));
-            starting.Add(new ItemType("sRude Buster"));
-        }
-        if (options[5] == 1)
-        {
-            itemsJunk.Add(new ItemType("Spookysword"));
-            itemsJunk.Add(new ItemType("Brave Ax"));
-            itemsJunk.Add(new ItemType("Ragger"));
-            itemsJunk.Add(new ItemType("DaintyScarf"));
-            weaponKNames.Add("Spookysword");
-            weaponSNames.Add("Brave Ax");
-            weaponRNames.Add("Ragger");
-            weaponRNames.Add("DaintyScarf");
-            if (options[24] == 1)
-            {
-                itemsJunk.Add(new ItemType("FiberScarf"));
-                itemsJunk.Add(new ItemType("MechaSaber"));
-                itemsJunk.Add(new ItemType("AutoAxe"));
-                itemsJunk.Add(new ItemType("Ragger2"));
-                itemsJunk.Add(new ItemType("BounceBlade"));
-                itemsJunk.Add(new ItemType("PuppetScarf"));
-                itemsJunk.Add(new ItemType("UltiBlade"));
-                itemsJunk.Add(new ItemType("Wand-Axe"));
-                itemsJunk.Add(new ItemType("Brute Axe"));
-                itemsJunk.Add(new ItemType("Chaos Saber"));
-                weaponRNames.Add("FiberScarf");
-                weaponKNames.Add("MechaSaber");
-                weaponSNames.Add("AutoAxe");
-                weaponRNames.Add("Ragger2");
-                weaponKNames.Add("BounceBlade");
-                weaponRNames.Add("PuppetScarf");
-                weaponKNames.Add("UltiBlade");
-                weaponSNames.Add("Wand-Axe");
-                weaponSNames.Add("Brute Axe");
-                weaponKNames.Add("Chaos Saber");
-                weaponRNames.Add("Chaos Saber");
-                weaponSNames.Add("Chaos Saber");
-            }
-        }
-        else
-        {
-            PlaceForcedItem(16, new ItemType("Ragger"));
-            PlaceForcedItem(28, new ItemType("Spookysword"));
-            PlaceForcedItem(30, new ItemType("Brave Ax"));
-            PlaceForcedItem(31, new ItemType("DaintyScarf"));
-        }
-        if (options[6] == 1)
-        {
-            if (options[24] == 1)
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    itemsJunk.Add(new ItemType("Silver Card"));
-                    itemsJunk.Add(new ItemType("GlowWrist"));
-                    itemsJunk.Add(new ItemType("B.ShotBowtie"));
-                    itemsJunk.Add(new ItemType("FrayedBowtie"));
-                    armorKNames.Add("Silver Card");
-                    armorRNames.Add("Silver Card");
-                    armorSNames.Add("Silver Card");
-                    armorKNames.Add("GlowWrist");
-                    armorRNames.Add("GlowWrist");
-                    armorSNames.Add("GlowWrist");
-                    armorKNames.Add("B.ShotBowtie");
-                    armorRNames.Add("B.ShotBowtie");
-                    armorSNames.Add("B.ShotBowtie");
-                    armorKNames.Add("FrayedBowtie");
-                    armorRNames.Add("FrayedBowtie");
-                }
+                itemsJunk.Add(new ItemType("Glowshard"));
+                items.Add(new ItemType("Top Cake"));
+                itemsJunk.Add(new ItemType("LancerCookie"));
                 for (int i = 0; i < 3; i++)
                 {
-                    itemsJunk.Add(new ItemType("SpikeBadge"));
-                    itemsJunk.Add(new ItemType("Fluffy Shield"));
-                    itemsJunk.Add(new ItemType("Silver Watch"));
-                    armorKNames.Add("SpikeBadge");
-                    armorRNames.Add("SpikeBadge");
-                    armorSNames.Add("SpikeBadge");
-                    armorKNames.Add("Fluffy Shield");
-                    armorRNames.Add("Fluffy Shield");
-                    armorKNames.Add("Silver Watch");
-                    armorRNames.Add("Silver Watch");
-                    armorSNames.Add("Silver Watch");
+                    itemsJunk.Add(new ItemType("Spincake"));
+                    itemsJunk.Add(new ItemType("ClubsSandwich"));
+                }
+                for (int i = 0; i < 8; i++)
+                {
+                    itemsJunk.Add(new ItemType("Dark Candy"));
                 }
                 for (int i = 0; i < 2; i++)
                 {
-                    itemsJunk.Add(new ItemType("TwinRibbon"));
-                    itemsJunk.Add(new ItemType("TensionBow"));
-                    armorKNames.Add("TwinRibbon");
-                    armorRNames.Add("TwinRibbon");
-                    armorKNames.Add("TensionBow");
-                    armorSNames.Add("TensionBow");
-                    armorRNames.Add("TensionBow");
+                    itemsJunk.Add(new ItemType("ReviveMint"));
+                    items.Add(new ItemType("Manual"));
                 }
-                itemsJunk.Add(new ItemType("Royal Pin"));
-                itemsJunk.Add(new ItemType("ChainMail"));
-                itemsJunk.Add(new ItemType("Dealmaker"));
-                itemsJunk.Add(new ItemType("SpikeBand"));
-                itemsJunk.Add(new ItemType("Mannequin"));
-                itemsJunk.Add(new ItemType("Pink Ribbon"));
-                armorKNames.Add("Royal Pin");
-                armorSNames.Add("Royal Pin");
-                armorRNames.Add("Royal Pin");
-                armorKNames.Add("ChainMail");
-                armorSNames.Add("ChainMail");
-                armorRNames.Add("ChainMail");
-                armorKNames.Add("Dealmaker");
-                armorSNames.Add("Dealmaker");
-                armorRNames.Add("Dealmaker");
-                armorKNames.Add("SpikeBand");
-                armorSNames.Add("SpikeBand");
-                armorRNames.Add("SpikeBand");
-                armorKNames.Add("Mannequin");
-                armorKNames.Add("Pink Ribbon");
-                armorRNames.Add("Pink Ribbon");
             }
-            for (int i = 0; i < 4; i++)
+            else
             {
-                itemsJunk.Add(new ItemType("Amber Card"));
-                armorKNames.Add("Amber Card");
-                armorSNames.Add("Amber Card");
-                armorRNames.Add("Amber Card");
+                PlaceForcedItem(0, new ItemType("Dark Candy"));
+                PlaceForcedItem(1, new ItemType("Dark Candy"));
+                PlaceForcedItem(2, new ItemType("Dark Candy"));
+                PlaceForcedItem(3, new ItemType("Dark Candy"));
+                PlaceForcedItem(5, new ItemType("Top Cake"));
+                PlaceForcedItem(6, new ItemType("ChocDiamond"));
+                PlaceForcedItem(7, new ItemType("HeartsDonut"));
+                PlaceForcedItem(8, new ItemType("LancerCookie"));
+                PlaceForcedItem(9, new ItemType("Spincake"));
+                PlaceForcedItem(10, new ItemType("Glowshard"));
+                PlaceForcedItem(11, new ItemType("Manual"));
+                PlaceForcedItem(12, new ItemType("Manual"));
+                PlaceForcedItem(14, new ItemType("ReviveMint"));
+                PlaceForcedItem(21, new ItemType("ClubsSandwich"));
+                PlaceForcedItem(22, new ItemType("ReviveMint"));
+                PlaceForcedItem(25, new ItemType("Dark Candy"));
+                PlaceForcedItem(26, new ItemType("Darkburger"));
+                PlaceForcedItem(29, new ItemType("RouxlsRoux"));
             }
-            for (int i = 0; i < 2; i++)
+            if (options[4] == 1)
             {
-                itemsJunk.Add(new ItemType("Dice Brace"));
-                armorKNames.Add("Dice Brace");
-                armorSNames.Add("Dice Brace");
-                armorRNames.Add("Dice Brace");
-            }
-            itemsJunk.Add(new ItemType("White Ribbon"));
-            itemsJunk.Add(new ItemType("IronShackle"));
-            armorKNames.Add("White Ribbon");
-            armorRNames.Add("White Ribbon");
-            armorKNames.Add("IronShackle");
-            armorSNames.Add("IronShackle");
-            armorRNames.Add("IronShackle");
-        }
-        else
-        {
-            PlaceForcedItem(27, new ItemType("Amber Card"));
-            PlaceForcedItem(32, new ItemType("Amber Card"));
-            PlaceForcedItem(17, new ItemType("Dice Brace"));
-            PlaceForcedItem(23, new ItemType("White Ribbon"));
-            PlaceForcedItem(35, new ItemType("IronShackle"));
-        }
-        if (options[71] == 0)
-        {
-            itemsJunk.Add(new ItemType("Devilsknife"));
-            itemsJunk.Add(new ItemType("Jevilstail"));
-            weaponSNames.Add("Devilsknife");
-            armorKNames.Add("Jevilstail");
-            armorSNames.Add("Jevilstail");
-            armorRNames.Add("Jevilstail");
-        }
-        else
-        {
-            PlaceForcedItem(20, new ItemType("Devilsknife"));
-            PlaceForcedItem(24, new ItemType("Jevilstail"));
-        }
-        if (options[3] == 1)
-        {
-            items.Add(new ItemType("FieldShortcutDoor"));
-            items.Add(new ItemType("BoardShortcutDoor"));
-            items.Add(new ItemType("ForestShortcutDoor"));
-            items.Add(new ItemType("CastleShortcutDoor"));
-        }
-        else
-        {
-            PlaceForcedItem(140, new ItemType("FieldShortcutDoor"));
-            PlaceForcedItem(99, new ItemType("BoardShortcutDoor"));
-            PlaceForcedItem(100, new ItemType("ForestShortcutDoor"));
-            PlaceForcedItem(101, new ItemType("CastleShortcutDoor"));
-        }
-        if (options[75] == 1)
-        {
-            itemsJunk.Add(new ItemType("Wood Blade"));
-            itemsJunk.Add(new ItemType("Mane Ax"));
-            itemsJunk.Add(new ItemType("Red Scarf"));
-            weaponKNames.Add("Wood Blade");
-            weaponRNames.Add("Red Scarf");
-            weaponSNames.Add("Mane Ax");
-        }
-        else
-        {
-            equipment[0] = new ItemType("Wood Blade");
-            equipment[1] = new ItemType("Mane Ax");
-            equipment[2] = new ItemType("Red Scarf");
-        }
-        StreamReader file;
-        foreach (var item in Directory.GetFiles(Directory.GetCurrentDirectory() + "/custom/armors/"))
-        {
-            file = File.OpenText(item);
-            var thisName = "";
-            while (!file.EndOfStream)
-            {
-                var itm = file.ReadLine();
-                if (itm.Contains("name="))
+                for (int i = 0; i < 19; i++)
                 {
-                    thisName = itm.Replace("name=", "");
+                    itemsJunk.Add(new ItemType("krislvl"));
+                    itemsJunk.Add(new ItemType("susielvl"));
+                    itemsJunk.Add(new ItemType("ralseilvl"));
                 }
-                if (itm.Contains("amount="))
+            }
+            else
+            {
+                for (int i = 0; i < 19; i++)
                 {
-                    for (int i = 0; i < int.Parse(itm.Replace("amount=", "")); i++)
+                    PlaceForcedItem(41 + i, new ItemType("krislvl"));
+                    PlaceForcedItem(60 + i, new ItemType("susielvl"));
+                    PlaceForcedItem(79 + i, new ItemType("ralseilvl"));
+                }
+            }
+            if (options[13] == 1)
+            {
+                items.Add(new ItemType("Susie"));
+                items.Add(new ItemType("Ralsei"));
+                items.Add(new ItemType("Control Susie"));
+            }
+            else
+            {
+                PlaceForcedItem(111, new ItemType("Ralsei"));
+                PlaceForcedItem(110, new ItemType("Susie"));
+                PlaceForcedItem(112, new ItemType("Control Susie"));
+            }
+            if (options[11] == 1)
+            {
+                items.Add(new ItemType("FIGHT"));
+                items.Add(new ItemType("MAGIC"));
+                items.Add(new ItemType("ITEM"));
+                items.Add(new ItemType("SPARE"));
+                items.Add(new ItemType("DEFEND"));
+            }
+            else
+            {
+                starting.Add(new ItemType("FIGHT"));
+                starting.Add(new ItemType("MAGIC"));
+                starting.Add(new ItemType("ITEM"));
+                starting.Add(new ItemType("SPARE"));
+                starting.Add(new ItemType("DEFEND"));
+            }
+            if (options[23] == 1)
+            {
+                items.Add(new ItemType("C MENU"));
+            }
+            else
+            {
+                starting.Add(new ItemType("C MENU"));
+            }
+            if (options[22] == 1)
+            {
+                items.Add(new ItemType("RUN"));
+            }
+            else
+            {
+                starting.Add(new ItemType("RUN"));
+            }
+            if (options[21] == 1)
+            {
+                items.Add(new ItemType("TP BAR"));
+            }
+            else
+            {
+                starting.Add(new ItemType("TP BAR"));
+            }
+            if (options[17] == 1)
+            {
+                items.Add(new ItemType("LEFT SOUL"));
+                items.Add(new ItemType("RIGHT SOUL"));
+                items.Add(new ItemType("UP SOUL"));
+                items.Add(new ItemType("DOWN SOUL"));
+            }
+            else
+            {
+                starting.Add(new ItemType("LEFT SOUL"));
+                starting.Add(new ItemType("RIGHT SOUL"));
+                starting.Add(new ItemType("UP SOUL"));
+                starting.Add(new ItemType("DOWN SOUL"));
+            }
+            if (options[18] == 1)
+            {
+                items.Add(new ItemType("SAVE HEAL"));
+            }
+            else
+            {
+                starting.Add(new ItemType("SAVE HEAL"));
+            }
+            if (options[19] == 1)
+            {
+                items.Add(new ItemType("SAVING"));
+            }
+            else
+            {
+                starting.Add(new ItemType("SAVING"));
+            }
+            if (options[77] == 1)
+            {
+                for (int i = 123; i <= 125; i++)
+                {
+                    itemsJunk.Add(new ItemType("Save"));
+                }
+            }
+            else
+            {
+                for (int i = 123; i <= 125; i++)
+                {
+                    PlaceForcedItem(i, new ItemType("Save"));
+                }
+            }
+            if (options[20] == 1)
+            {
+                for (int i = 0; i < 14; i++)
+                {
+                    itemsJunk.Add(new ItemType("Save"));
+                }
+            }
+            else
+            {
+
+                for (int i = 126; i <= 139; i++)
+                {
+                    PlaceForcedItem(i, new ItemType("Save"));
+                }
+            }
+            if (options[10] == 1)
+            {
+                items.Add(new ItemType("kACT"));
+                itemsJunk.Add(new ItemType("rHeal Prayer"));
+                itemsJunk.Add(new ItemType("rPacify"));
+                itemsJunk.Add(new ItemType("sRude Buster"));
+                if (options[24] == 1)
+                {
+                    items.Add(new ItemType("sACT"));
+                    items.Add(new ItemType("rACT"));
+                    itemsJunk.Add(new ItemType("sLife Steal"));
+                    itemsJunk.Add(new ItemType("kRed Sword"));
+                    itemsJunk.Add(new ItemType("kFocus Blade"));
+                    itemsJunk.Add(new ItemType("kX-Slash"));
+                    itemsJunk.Add(new ItemType("rMulti-Heal"));
+                    itemsJunk.Add(new ItemType("rPoison"));
+                    itemsJunk.Add(new ItemType("sHorrid Buster"));
+                    itemsJunk.Add(new ItemType("sHealing Magic"));
+                    itemsJunk.Add(new ItemType("rLife Transfer"));
+                    itemsJunk.Add(new ItemType("sDefense Trade"));
+                    itemsJunk.Add(new ItemType("rDark Sleep"));
+                }
+            }
+            else
+            {
+                starting.Add(new ItemType("kACT"));
+                starting.Add(new ItemType("rHeal Prayer"));
+                starting.Add(new ItemType("rPacify"));
+                starting.Add(new ItemType("sRude Buster"));
+            }
+            if (options[5] == 1)
+            {
+                itemsJunk.Add(new ItemType("Spookysword"));
+                itemsJunk.Add(new ItemType("Brave Ax"));
+                itemsJunk.Add(new ItemType("Ragger"));
+                itemsJunk.Add(new ItemType("DaintyScarf"));
+                weaponKNames.Add("Spookysword");
+                weaponSNames.Add("Brave Ax");
+                weaponRNames.Add("Ragger");
+                weaponRNames.Add("DaintyScarf");
+                if (options[24] == 1)
+                {
+                    itemsJunk.Add(new ItemType("FiberScarf"));
+                    itemsJunk.Add(new ItemType("MechaSaber"));
+                    itemsJunk.Add(new ItemType("AutoAxe"));
+                    itemsJunk.Add(new ItemType("Ragger2"));
+                    itemsJunk.Add(new ItemType("BounceBlade"));
+                    itemsJunk.Add(new ItemType("PuppetScarf"));
+                    itemsJunk.Add(new ItemType("UltiBlade"));
+                    itemsJunk.Add(new ItemType("Wand-Axe"));
+                    itemsJunk.Add(new ItemType("Brute Axe"));
+                    itemsJunk.Add(new ItemType("Chaos Saber"));
+                    weaponRNames.Add("FiberScarf");
+                    weaponKNames.Add("MechaSaber");
+                    weaponSNames.Add("AutoAxe");
+                    weaponRNames.Add("Ragger2");
+                    weaponKNames.Add("BounceBlade");
+                    weaponRNames.Add("PuppetScarf");
+                    weaponKNames.Add("UltiBlade");
+                    weaponSNames.Add("Wand-Axe");
+                    weaponSNames.Add("Brute Axe");
+                    weaponKNames.Add("Chaos Saber");
+                    weaponRNames.Add("Chaos Saber");
+                    weaponSNames.Add("Chaos Saber");
+                }
+            }
+            else
+            {
+                PlaceForcedItem(16, new ItemType("Ragger"));
+                PlaceForcedItem(28, new ItemType("Spookysword"));
+                PlaceForcedItem(30, new ItemType("Brave Ax"));
+                PlaceForcedItem(31, new ItemType("DaintyScarf"));
+            }
+            if (options[6] == 1)
+            {
+                if (options[24] == 1)
+                {
+                    for (int i = 0; i < 4; i++)
                     {
-                        itemsJunk.Add(new ItemType(thisName));
+                        itemsJunk.Add(new ItemType("Silver Card"));
+                        itemsJunk.Add(new ItemType("GlowWrist"));
+                        itemsJunk.Add(new ItemType("B.ShotBowtie"));
+                        itemsJunk.Add(new ItemType("FrayedBowtie"));
+                        armorKNames.Add("Silver Card");
+                        armorRNames.Add("Silver Card");
+                        armorSNames.Add("Silver Card");
+                        armorKNames.Add("GlowWrist");
+                        armorRNames.Add("GlowWrist");
+                        armorSNames.Add("GlowWrist");
+                        armorKNames.Add("B.ShotBowtie");
+                        armorRNames.Add("B.ShotBowtie");
+                        armorSNames.Add("B.ShotBowtie");
+                        armorKNames.Add("FrayedBowtie");
+                        armorRNames.Add("FrayedBowtie");
+                    }
+                    for (int i = 0; i < 3; i++)
+                    {
+                        itemsJunk.Add(new ItemType("SpikeBadge"));
+                        itemsJunk.Add(new ItemType("Fluffy Shield"));
+                        itemsJunk.Add(new ItemType("Silver Watch"));
+                        armorKNames.Add("SpikeBadge");
+                        armorRNames.Add("SpikeBadge");
+                        armorSNames.Add("SpikeBadge");
+                        armorKNames.Add("Fluffy Shield");
+                        armorRNames.Add("Fluffy Shield");
+                        armorKNames.Add("Silver Watch");
+                        armorRNames.Add("Silver Watch");
+                        armorSNames.Add("Silver Watch");
+                    }
+                    for (int i = 0; i < 2; i++)
+                    {
+                        itemsJunk.Add(new ItemType("TwinRibbon"));
+                        itemsJunk.Add(new ItemType("TensionBow"));
+                        armorKNames.Add("TwinRibbon");
+                        armorRNames.Add("TwinRibbon");
+                        armorKNames.Add("TensionBow");
+                        armorSNames.Add("TensionBow");
+                        armorRNames.Add("TensionBow");
+                    }
+                    itemsJunk.Add(new ItemType("Royal Pin"));
+                    itemsJunk.Add(new ItemType("ChainMail"));
+                    itemsJunk.Add(new ItemType("Dealmaker"));
+                    itemsJunk.Add(new ItemType("SpikeBand"));
+                    itemsJunk.Add(new ItemType("Mannequin"));
+                    itemsJunk.Add(new ItemType("Pink Ribbon"));
+                    armorKNames.Add("Royal Pin");
+                    armorSNames.Add("Royal Pin");
+                    armorRNames.Add("Royal Pin");
+                    armorKNames.Add("ChainMail");
+                    armorSNames.Add("ChainMail");
+                    armorRNames.Add("ChainMail");
+                    armorKNames.Add("Dealmaker");
+                    armorSNames.Add("Dealmaker");
+                    armorRNames.Add("Dealmaker");
+                    armorKNames.Add("SpikeBand");
+                    armorSNames.Add("SpikeBand");
+                    armorRNames.Add("SpikeBand");
+                    armorKNames.Add("Mannequin");
+                    armorKNames.Add("Pink Ribbon");
+                    armorRNames.Add("Pink Ribbon");
+                }
+                for (int i = 0; i < 4; i++)
+                {
+                    itemsJunk.Add(new ItemType("Amber Card"));
+                    armorKNames.Add("Amber Card");
+                    armorSNames.Add("Amber Card");
+                    armorRNames.Add("Amber Card");
+                }
+                for (int i = 0; i < 2; i++)
+                {
+                    itemsJunk.Add(new ItemType("Dice Brace"));
+                    armorKNames.Add("Dice Brace");
+                    armorSNames.Add("Dice Brace");
+                    armorRNames.Add("Dice Brace");
+                }
+                itemsJunk.Add(new ItemType("White Ribbon"));
+                itemsJunk.Add(new ItemType("IronShackle"));
+                armorKNames.Add("White Ribbon");
+                armorRNames.Add("White Ribbon");
+                armorKNames.Add("IronShackle");
+                armorSNames.Add("IronShackle");
+                armorRNames.Add("IronShackle");
+            }
+            else
+            {
+                PlaceForcedItem(27, new ItemType("Amber Card"));
+                PlaceForcedItem(32, new ItemType("Amber Card"));
+                PlaceForcedItem(17, new ItemType("Dice Brace"));
+                PlaceForcedItem(23, new ItemType("White Ribbon"));
+                PlaceForcedItem(35, new ItemType("IronShackle"));
+            }
+            if (options[71] == 0)
+            {
+                itemsJunk.Add(new ItemType("Devilsknife"));
+                itemsJunk.Add(new ItemType("Jevilstail"));
+                weaponSNames.Add("Devilsknife");
+                armorKNames.Add("Jevilstail");
+                armorSNames.Add("Jevilstail");
+                armorRNames.Add("Jevilstail");
+            }
+            else
+            {
+                PlaceForcedItem(20, new ItemType("Devilsknife"));
+                PlaceForcedItem(24, new ItemType("Jevilstail"));
+            }
+            if (options[3] == 1)
+            {
+                items.Add(new ItemType("FieldShortcutDoor"));
+                items.Add(new ItemType("BoardShortcutDoor"));
+                items.Add(new ItemType("ForestShortcutDoor"));
+                items.Add(new ItemType("CastleShortcutDoor"));
+            }
+            else
+            {
+                PlaceForcedItem(140, new ItemType("FieldShortcutDoor"));
+                PlaceForcedItem(99, new ItemType("BoardShortcutDoor"));
+                PlaceForcedItem(100, new ItemType("ForestShortcutDoor"));
+                PlaceForcedItem(101, new ItemType("CastleShortcutDoor"));
+            }
+            if (options[75] == 1)
+            {
+                itemsJunk.Add(new ItemType("Wood Blade"));
+                itemsJunk.Add(new ItemType("Mane Ax"));
+                itemsJunk.Add(new ItemType("Red Scarf"));
+                weaponKNames.Add("Wood Blade");
+                weaponRNames.Add("Red Scarf");
+                weaponSNames.Add("Mane Ax");
+            }
+            else
+            {
+                equipment[0] = new ItemType("Wood Blade");
+                equipment[1] = new ItemType("Mane Ax");
+                equipment[2] = new ItemType("Red Scarf");
+            }
+            foreach (var item in Directory.GetFiles(Directory.GetCurrentDirectory() + "/custom/armors/"))
+            {
+                file = File.OpenText(item);
+                var thisName = "";
+                while (!file.EndOfStream)
+                {
+                    var itm = file.ReadLine();
+                    if (itm.Contains("name="))
+                    {
+                        thisName = itm.Replace("name=", "");
+                    }
+                    if (itm.Contains("amount="))
+                    {
+                        for (int i = 0; i < int.Parse(itm.Replace("amount=", "")); i++)
+                        {
+                            itemsJunk.Add(new ItemType(thisName));
+                        }
+                    }
+                    if (itm.Contains("can_kris_equip=true"))
+                    {
+                        armorKNames.Add(thisName);
+                    }
+                    if (itm.Contains("can_ralsei_equip=true"))
+                    {
+                        armorKNames.Add(thisName);
+                    }
+                    if (itm.Contains("can_susie_equip=true"))
+                    {
+                        armorKNames.Add(thisName);
                     }
                 }
-                if (itm.Contains("can_kris_equip=true"))
-                {
-                    armorKNames.Add(thisName);
-                }
-                if (itm.Contains("can_ralsei_equip=true"))
-                {
-                    armorKNames.Add(thisName);
-                }
-                if (itm.Contains("can_susie_equip=true"))
-                {
-                    armorKNames.Add(thisName);
-                }
+                file.Close();
             }
-            file.Close();
-        }
-        foreach (var item in Directory.GetFiles(Directory.GetCurrentDirectory() + "/custom/weapons/"))
-        {
-            file = File.OpenText(item);
-            var thisName = "";
-            while (!file.EndOfStream)
+            foreach (var item in Directory.GetFiles(Directory.GetCurrentDirectory() + "/custom/weapons/"))
             {
-                var itm = file.ReadLine();
-                if (itm.Contains("name="))
+                file = File.OpenText(item);
+                var thisName = "";
+                while (!file.EndOfStream)
                 {
-                    thisName = itm.Replace("name=", "");
-                }
-                if (itm.Contains("amount="))
-                {
-                    for (int i = 0; i < int.Parse(itm.Replace("amount=", "")); i++)
+                    var itm = file.ReadLine();
+                    if (itm.Contains("name="))
                     {
-                        itemsJunk.Add(new ItemType(thisName));
+                        thisName = itm.Replace("name=", "");
+                    }
+                    if (itm.Contains("amount="))
+                    {
+                        for (int i = 0; i < int.Parse(itm.Replace("amount=", "")); i++)
+                        {
+                            itemsJunk.Add(new ItemType(thisName));
+                        }
+                    }
+                    if (itm.Contains("can_kris_equip=true"))
+                    {
+                        weaponKNames.Add(thisName);
+                    }
+                    if (itm.Contains("can_ralsei_equip=true"))
+                    {
+                        weaponKNames.Add(thisName);
+                    }
+                    if (itm.Contains("can_susie_equip=true"))
+                    {
+                        weaponKNames.Add(thisName);
                     }
                 }
-                if (itm.Contains("can_kris_equip=true"))
-                {
-                    weaponKNames.Add(thisName);
-                }
-                if (itm.Contains("can_ralsei_equip=true"))
-                {
-                    weaponKNames.Add(thisName);
-                }
-                if (itm.Contains("can_susie_equip=true"))
-                {
-                    weaponKNames.Add(thisName);
-                }
+                file.Close();
             }
-            file.Close();
-        }
-        foreach (var item in Directory.GetFiles(Directory.GetCurrentDirectory() + "/custom/spells/"))
-        {
-            file = File.OpenText(item);
-            var thisName = "";
-            var thisChar = "";
-            var amt = 0;
-            while (!file.EndOfStream)
+            foreach (var item in Directory.GetFiles(Directory.GetCurrentDirectory() + "/custom/spells/"))
             {
-                var itm = file.ReadLine();
-                if (itm.Contains("name="))
+                file = File.OpenText(item);
+                var thisName = "";
+                var thisChar = "";
+                var amt = 0;
+                while (!file.EndOfStream)
                 {
-                    thisName = itm.Replace("name=", "");
+                    var itm = file.ReadLine();
+                    if (itm.Contains("name="))
+                    {
+                        thisName = itm.Replace("name=", "");
+                    }
+                    if (itm.Contains("owner="))
+                    {
+                        thisChar = itm.Replace("owner=", "")[0].ToString();
+                    }
+                    if (itm.Contains("amount="))
+                    {
+                        amt = int.Parse(itm.Replace("amount=", ""));
+                    }
                 }
-                if (itm.Contains("owner="))
+                for (int i = 0; i < amt; i++)
                 {
-                    thisChar = itm.Replace("owner=", "")[0].ToString();
+                    itemsJunk.Add(new ItemType(thisChar + thisName));
                 }
-                if (itm.Contains("amount="))
-                {
-                    amt = int.Parse(itm.Replace("amount=", ""));
-                }
+                file.Close();
             }
-            for (int i = 0; i < amt; i++)
-            {
-                itemsJunk.Add(new ItemType(thisChar + thisName));
-            }
-            file.Close();
         }
         file = File.OpenText(Directory.GetCurrentDirectory() + "/custom/remove/remove.txt");
         file.ReadLine();
@@ -1164,47 +1175,50 @@ public class World
             }
         }
         file.Close();
-        for (int i = 0; i < 19; i++)
+        if (myChapter == 1)
         {
-            if (!wantedLocs.Exists(x => x.name == "Susie") && !items.Exists(x => x.name == "Susie") && !itemsJunk.Exists(x => x.name == "Susie"))
+            for (int i = 0; i < 19; i++)
             {
-                locations[60 + i] = new ItemType("susielvl");
-                items.RemoveAll(x => x.name == "susielvl");
-                itemsJunk.RemoveAll(x => x.name == "susielvl");
+                if (!wantedLocs.Exists(x => x.name == "Susie") && !items.Exists(x => x.name == "Susie") && !itemsJunk.Exists(x => x.name == "Susie"))
+                {
+                    locations[60 + i] = new ItemType("susielvl");
+                    items.RemoveAll(x => x.name == "susielvl");
+                    itemsJunk.RemoveAll(x => x.name == "susielvl");
+                }
+                if (!wantedLocs.Exists(x => x.name == "Ralsei") && !items.Exists(x => x.name == "Ralsei") && !itemsJunk.Exists(x => x.name == "Ralsei"))
+                {
+                    locations[79 + i] = new ItemType("ralseilvl");
+                    items.RemoveAll(x => x.name == "ralseilvl");
+                    itemsJunk.RemoveAll(x => x.name == "ralseilvl");
+                }
             }
-            if (!wantedLocs.Exists(x => x.name == "Ralsei") && !items.Exists(x => x.name == "Ralsei") && !itemsJunk.Exists(x => x.name == "Ralsei"))
+            if (options[63] == 1)
             {
-                locations[79 + i] = new ItemType("ralseilvl");
-                items.RemoveAll(x => x.name == "ralseilvl");
-                itemsJunk.RemoveAll(x => x.name == "ralseilvl");
+                int tempJunkCount = itemsJunk.Count;
+                for (int i = 0; i < Math.Max(1, Math.Ceiling(tempJunkCount / 4f)); i++)
+                {
+                    itemsJunk.Add(new ItemType("Trap"));
+                }
             }
+            file = File.OpenText(Directory.GetCurrentDirectory() + "/custom/startingItems.txt");
+            file.ReadLine();
+            file.ReadLine();
+            while (!file.EndOfStream)
+            {
+                var itm = file.ReadLine();
+                if (items.Exists(x => x.name == itm))
+                {
+                    trueStarting.Add(new ItemType(itm));
+                    items.Remove(new ItemType(itm));
+                }
+                else if (itemsJunk.Exists(x => x.name == itm))
+                {
+                    trueStarting.Add(new ItemType(itm));
+                    itemsJunk.Remove(new ItemType(itm));
+                }
+            }
+            file.Close();
         }
-        if (options[63] == 1)
-        {
-            int tempJunkCount = itemsJunk.Count;
-            for (int i = 0; i < Math.Max(1,Math.Ceiling(tempJunkCount/4f)); i++)
-            {
-                itemsJunk.Add(new ItemType("Trap"));
-            }
-        }
-        file = File.OpenText(Directory.GetCurrentDirectory() + "/custom/startingItems.txt");
-        file.ReadLine();
-        file.ReadLine();
-        while (!file.EndOfStream)
-        {
-            var itm = file.ReadLine();
-            if (items.Exists(x => x.name == itm))
-            {
-                trueStarting.Add(new ItemType(itm));
-                items.Remove(new ItemType(itm));
-            }
-            else if (itemsJunk.Exists(x => x.name == itm))
-            {
-                trueStarting.Add(new ItemType(itm));
-                itemsJunk.Remove(new ItemType(itm));
-            }
-        }
-        file.Close();
         while (locations.FindAll(x => x.name == "Null").Count > items.Count + itemsJunk.Count - options[1] + wantedLocs.FindAll(x => x.name != "").Count)
         {
             itemsJunk.Add(new ItemType("gold"));

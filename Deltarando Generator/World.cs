@@ -147,6 +147,8 @@ public class World
     public int myChapter = 1;
     public string myFile = "options.txt";
     public string myId = "000";
+    List<string> locsAvail = new List<string>();
+    List<int> roomsReached = new List<int>();
     List<List<ItemType>> lastLocations = new List<List<ItemType>>();
     List<List<int>> lastOrder = new List<List<int>>();
     List<ItemType> lastItems = new List<ItemType>();
@@ -293,6 +295,40 @@ public class World
     }
     public bool Randomize()
     {
+        if (options[39] == 1)
+        {
+            if (!ShuffleRooms())
+            {
+                return false;
+            }
+        }
+        emptyLocs = new List<int>();
+        for (int i = 0; i < locations.Count; i++)
+        {
+            if (locations[i].name == "Null")
+            {
+                emptyLocs.Add(i);
+            }
+        }
+        List<int> toChooseFrom = new List<int>();
+        for (int i = 0; i < emptyLocs.Count; i++)
+        {
+            if (rules[emptyLocs[i]].Invoke(this))
+            {
+                toChooseFrom.Add(emptyLocs[i]);
+            }
+        }
+        bool foundWanted = false;
+        foreach (var item in toChooseFrom)
+        {
+            if (wantedLocs[item].name != "")
+            {
+                PlaceItem(item, new ItemType(wantedLocs[item]));
+                foundWanted = true;
+            }
+        }
+        while (foundWanted)
+        {
             emptyLocs = new List<int>();
             for (int i = 0; i < locations.Count; i++)
             {
@@ -301,7 +337,7 @@ public class World
                     emptyLocs.Add(i);
                 }
             }
-            List<int> toChooseFrom = new List<int>();
+            toChooseFrom = new List<int>();
             for (int i = 0; i < emptyLocs.Count; i++)
             {
                 if (rules[emptyLocs[i]].Invoke(this))
@@ -309,7 +345,7 @@ public class World
                     toChooseFrom.Add(emptyLocs[i]);
                 }
             }
-            bool foundWanted = false;
+            foundWanted = false;
             foreach (var item in toChooseFrom)
             {
                 if (wantedLocs[item].name != "")
@@ -318,35 +354,8 @@ public class World
                     foundWanted = true;
                 }
             }
-            while (foundWanted)
-            {
-                emptyLocs = new List<int>();
-                for (int i = 0; i < locations.Count; i++)
-                {
-                    if (locations[i].name == "Null")
-                    {
-                        emptyLocs.Add(i);
-                    }
-                }
-                toChooseFrom = new List<int>();
-                for (int i = 0; i < emptyLocs.Count; i++)
-                {
-                    if (rules[emptyLocs[i]].Invoke(this))
-                    {
-                        toChooseFrom.Add(emptyLocs[i]);
-                    }
-                }
-                foundWanted = false;
-                foreach (var item in toChooseFrom)
-                {
-                    if (wantedLocs[item].name != "")
-                    {
-                        PlaceItem(item, new ItemType(wantedLocs[item]));
-                        foundWanted = true;
-                    }
-                }
-            }
-        if (items.Count + itemsJunk.Count <= 0)
+        }
+        if (items.Count + itemsJunk.Count <= 0 || backCount > 20)
         {
             if (emptyLocs.Count > 0)
             {
@@ -366,7 +375,7 @@ public class World
                         locsOrder = new List<int>(lastOrder[lastOrder.Count - 1]);
                         if (!(lastItems[lastItems.Count - 1].name == "Null"))
                         {
-                            itemsRemoved.Add(new ItemType(lastItems[lastItems.Count - 1]));
+                            items.Add(new ItemType(lastItems[lastItems.Count - 1]));
                         }
                         lastLocations.RemoveAt(lastLocations.Count - 1);
                         lastOrder.RemoveAt(lastOrder.Count - 1);
@@ -377,7 +386,7 @@ public class World
                 locsOrder = new List<int>(lastOrder[lastOrder.Count - 1]);
                 if (!(lastItems[lastItems.Count - 1].name == "Null"))
                 {
-                    itemsRemoved.Add(new ItemType(lastItems[lastItems.Count - 1]));
+                    items.Add(new ItemType(lastItems[lastItems.Count - 1]));
                 }
                 lastLocations.RemoveAt(lastLocations.Count - 1);
                 lastOrder.RemoveAt(lastOrder.Count - 1);
@@ -422,6 +431,7 @@ public class World
             }
             locsOrder.Add(chosen);
             timeSinceBack++;
+            /*
             if (timeSinceBack >= 7)
             {
                 foreach (var item in itemsRemoved)
@@ -430,16 +440,14 @@ public class World
                 }
                 itemsRemoved.Clear();
                 backCount = 0;
-            }
-                Console.WriteLine("Placed Item.");// + "\n" + (items.Count + itemsJunk.Count + itemsRemoved.Count).ToString() + " items left.");
+            }*/
+            Console.WriteLine("Placed Item.");// + "\n" + (items.Count + itemsJunk.Count + itemsRemoved.Count).ToString() + " items left.");
         }
         return true;
     }
 
-    public bool ShuffleRooms()
+    public void ShuffleRoomsSetup()
     {
-        List<string> locsAvail = new List<string>();
-        List<int> roomsReached = new List<int>();
         roomsReached.Add(0);
         foreach (var item in rooms)
         {
@@ -463,22 +471,19 @@ public class World
                 }
             }
         }
-        var tempTempRoomList = new List<List<RoomType>>();
-        tempTempRoomList.Add(rooms);
-        var tempTempReachedList = new List<List<int>>();
-        tempTempReachedList.Add(roomsReached);
-        var tempTempLocsList = new List<List<string>>();
-        tempTempLocsList.Add(locsAvail);
-        while (locsAvail.Count > 0)
+    }
+    public bool ShuffleRooms()
+    {
+        List<string> tempLocs = new List<string>(locsAvail);
+        List<int> tempRooms = new List<int>();
+        int newPaths = 0;
+        foreach (var item in roomsReached)
         {
-            List<int> tempRooms = new List<int>();
-            int newPaths = 0;
-            List<string> tempLocs = new List<string>(locsAvail);
-            foreach (var item in roomsReached)
+            for (int i = 0; i < rooms[item].connections.Count; i++)
             {
-                for (int i = 0; i < rooms[item].connections.Count; i++)
+                if (rooms[item].connections[i].Length == 1)
                 {
-                    if (rooms[item].connections[i].Length == 1)
+                    if (SpecialLogic.CanReachRoom(this, rooms[item].name))
                     {
                         var chosen = Deltarando_Generator.Program.rng.Next(0, tempLocs.Count);
                         tempRooms.Add(rooms.FindIndex(x => x.name == tempLocs[chosen].Remove(tempLocs[chosen].Length - 1)));
@@ -507,20 +512,25 @@ public class World
                             }
                         }
                     }
+                    else
+                    {
+                        if (!tempRooms.Contains(item))
+                        {
+                            tempRooms.Add(item);
+                            newPaths++;
+                        }
+                    }
                 }
             }
-            if (newPaths > 0 || locsAvail.Count <= 0)
-            {
-                roomsReached = new List<int>(tempRooms);
-                locsAvail = new List<string>(tempLocs);
-                tempTempRoomList.Add(rooms);
-                tempTempReachedList.Add(roomsReached);
-                tempTempLocsList.Add(locsAvail);
-            }
-            else
-            {
-                return false;
-            }
+        }
+        if (newPaths > 0 || locsAvail.Count <= 0)
+        {
+            roomsReached = new List<int>(tempRooms);
+            locsAvail = new List<string>(tempLocs);
+        }
+        else
+        {
+            return false;
         }
         return true;
     }
@@ -605,7 +615,7 @@ public class World
         rooms.Add(new RoomType("room_shop2", "room_cc_5fx"));
         while (rooms.Count <= 200)
         {
-            rooms.Add(new RoomType("", ""));
+            rooms.Add(new RoomType("", " "));
         }
         for (int i = 0; i < rooms.Count; i++)
         {
@@ -1252,10 +1262,13 @@ public static class SpecialLogic
                     {
                         if (tempRoom.connectionRules[i].Invoke(world))
                         {
-                            if (world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).connectionRules[world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).connections.FindIndex(x => x.Remove(x.Length - 1) == tempRoom.name)].Invoke(world))
+                            if (world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).connections.FindIndex(x => x.Remove(x.Length - 1) == tempRoom.name) >= 0)
                             {
-                                tempRooms.Add(world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).name);
-                                allRooms.Add(world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).name);
+                                if (world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).connectionRules[world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).connections.FindIndex(x => x.Remove(x.Length - 1) == tempRoom.name)].Invoke(world))
+                                {
+                                    tempRooms.Add(world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).name);
+                                    allRooms.Add(world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).name);
+                                }
                             }
                         }
                     }
@@ -1287,13 +1300,16 @@ public static class SpecialLogic
                         if (tempRoom.connectionRules[i].Invoke(world))
                         {
                             var targetRoom = world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1));
-                            if (tempRoom.connections.Contains(roomName) || targetRoom.connectionRules[targetRoom.connections.FindIndex(x => x.Remove(x.Length - 1) == tempRoom.name)].Invoke(world))
+                            if (targetRoom.connections.FindIndex(x => x.Remove(x.Length - 1) == tempRoom.name) >= 0)
                             {
-                                tempRooms.Add(world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).name);
-                                allRooms.Add(world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).name);
-                                foreach (var conn in world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).connections)
+                                if (tempRoom.connections.Contains(roomName) || targetRoom.connectionRules[targetRoom.connections.FindIndex(x => x.Remove(x.Length - 1) == tempRoom.name)].Invoke(world))
                                 {
-                                    allCons.Add(conn);
+                                    tempRooms.Add(world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).name);
+                                    allRooms.Add(world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).name);
+                                    foreach (var conn in world.rooms.Find(x => x.name == tempRoom.connections[i].Remove(tempRoom.connections[i].Length - 1)).connections)
+                                    {
+                                        allCons.Add(conn);
+                                    }
                                 }
                             }
                         }
@@ -1317,7 +1333,7 @@ public static class SpecialLogic
         int amountFound = 0;
         foreach (var item in world.enemyRooms)
         {
-            if (SpecialLogic.CanReachRoom(world, world.rooms[item].name))
+            if (SpecialLogic.CanReachRoom(world, world.rooms[item].name) && Rule.PlacedItem(world, new ItemType("FIGHT")))
             {
                 amountFound++;
             }

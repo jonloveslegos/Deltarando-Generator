@@ -68,6 +68,7 @@
     <Content Include="optionsTemplate.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Players\optionsCH2.txt" />
     <Content Include="Server\data.win">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

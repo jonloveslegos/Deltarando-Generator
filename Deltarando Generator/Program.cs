@@ -153,12 +153,7 @@ namespace Deltarando_Generator
                 worlds[i].itemsJunk.Clear();
                 if (worlds[i].options[39] == 1)
                 {
-                    while (!worlds[i].ShuffleRooms())
-                    {
-                        worlds[i].rooms.Clear();
-                        worlds[i].enemyRooms.Clear();
-                        worlds[i].AddRooms();
-                    }
+                    worlds[i].ShuffleRoomsSetup();
                 }
             }
             Console.WriteLine("Shuffling items...");

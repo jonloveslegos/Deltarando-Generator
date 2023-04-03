@@ -18,7 +18,7 @@
 (6) Randomize Armors=True
 (3) Randomize Shortcut Doors=False
 (1) Starting Items=0
-(98) Enemy Difficulty=1
+(98) Enemy Stat Multiplier=1
 (76) Logic Difficulty (1-3)=3
 (77) Randomize Starting Area Savepoints (Cannot be obtained after leaving)=True
 (75) Randomize Starting Weapons=False

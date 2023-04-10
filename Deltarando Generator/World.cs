@@ -1326,7 +1326,7 @@ public static class SpecialLogic
     }
     public static bool CanCompleteTutorial(World world)
     {
-        return ((Rule.PlacedItem(world, new ItemType("LEFT SOUL")) || Rule.PlacedItem(world, new ItemType("RIGHT SOUL"))) && (Rule.PlacedItem(world, new ItemType("DOWN SOUL")) || Rule.PlacedItem(world, new ItemType("UP SOUL"))) && (Rule.PlacedItem(world, new ItemType("DEFEND")) || Rule.PlacedItem(world, new ItemType("FIGHT"))));
+        return ((Rule.PlacedItem(world, new ItemType("LEFT SOUL")) || Rule.PlacedItem(world, new ItemType("RIGHT SOUL"))) && (Rule.PlacedItem(world, new ItemType("DOWN SOUL")) || Rule.PlacedItem(world, new ItemType("UP SOUL"))) && (Rule.PlacedItem(world, new ItemType("FIGHT"))));
     }
     public static bool CanLevelUp(World world, int strength)
     {
